@@ -3,6 +3,10 @@
   function handleStart() {
     goto('/start');
   }
+
+  function handleProfile() {
+    goto('/ProfileScreen');
+  }
 </script>
 
 <style>
