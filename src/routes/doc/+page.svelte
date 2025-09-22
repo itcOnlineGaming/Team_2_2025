@@ -1,10 +1,59 @@
 <script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+
   let fileContent = '';
   let fileName = '';
   let fileHandle: any = null;
   let caretPos = 0;
   let textareaRef: HTMLTextAreaElement | null = null;
   let editorRef: HTMLDivElement | null = null;
+
+  // =========================
+  // Timer & routing
+  // =========================
+  let secondsLeft = 60;
+  let timerId: any = null;
+  let hasFinished = false;
+
+  function formatTime(s: number) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  function startTimer() {
+    clearInterval(timerId);
+    secondsLeft = 60;
+    hasFinished = false;
+    timerId = setInterval(() => {
+      secondsLeft = Math.max(0, secondsLeft - 1);
+      if (secondsLeft === 0 && !hasFinished) {
+        evaluateAndRoute();
+      }
+    }, 1000);
+  }
+
+  function evaluateAndRoute() {
+    hasFinished = true;
+    clearInterval(timerId);
+    // Decide based on current word count
+    if (wordCount < 50) {
+      // Failure screen
+      window.location.href = '/failureScreen';
+    } else {
+      // Home screen
+      window.location.href = '/';
+    }
+  }
+
+  onMount(() => {
+    startTimer();
+    return () => clearInterval(timerId);
+  });
+
+  onDestroy(() => {
+    clearInterval(timerId);
+  });
 
   // Open file picker and read .md file
   async function openFile() {
@@ -202,7 +251,28 @@
 
 {#if true}
   <h2>Editing Markdown:</h2>
-  <div style="margin-bottom: 0.5rem; color: #888; font-size: 0.95em;">Word count: {wordCount}</div>
+
+  <!-- Timer + Word Count bar -->
+  <div class="markdown-editor-bar" style="display:flex; align-items:center; gap:.75rem; margin: .25rem 0 .75rem; color:#666; font-size:.95em;">
+    <div><strong>Word count:</strong> {wordCount}</div>
+    <div style="display:flex; align-items:center; gap:.5rem;">
+      <strong>Time left:</strong>
+      <span aria-live="polite" style="font-variant-numeric: tabular-nums;">{formatTime(secondsLeft)}</span>
+    </div>
+  </div>
+
+  <!-- Simple progress bar for the minute -->
+  <div style="height:8px; background:#eee; border-radius:999px; overflow:hidden; margin-bottom:.75rem;">
+    <div
+      style="
+        height:100%;
+        width:{(60 - secondsLeft) / 60 * 100}%;
+        background:#8BAA8B;
+        transition: width .25s linear;
+      "
+    />
+  </div>
+
   <div
     bind:this={editorRef}
     contenteditable="true"
@@ -210,5 +280,5 @@
     on:input={handleEditorInput}
     on:keyup={handleEditorInput}
     on:mouseup={handleEditorInput}
-    >{fileContent}</div>
+  >{fileContent}</div>
 {/if}

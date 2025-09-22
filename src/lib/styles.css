@@ -1,37 +1,202 @@
 :root {
-  --main-bg: #8B5C7E;
+  --main-bg: #fff;
   --card-bg: #fff;
   --card-border: #8BAA8B;
   --primary: #8BAA8B;
   --accent: #8B5C7E;
+
+  --text: #222;
+  --muted-text: #4a4a4a;
+  --surface: #f7f7f7;
+  --focus: 0 0% 0%;
+  --ring-opacity: .18;
+
+  --primary-hover: #7a9c7a;
+  --primary-active: #6f916f;
+  --secondary: #f3f3f3;
+  --secondary-border: #ddd;
+  --secondary-hover: #e7e7e7;
+  --ghost-hover: rgba(0,0,0,.05);
+  --danger: #F3C6C6;
+  --danger-hover: #e6b3b3;
+  --danger-active: #d9a3a3;
+
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --shadow-sm: 0 2px 8px rgba(139,92,126,0.10);
+  --shadow-md: 0 10px 25px rgba(0,0,0,0.08);
 }
 
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   background: var(--main-bg);
+  color: var(--text);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
 }
 
-.fullscreen {
+/* ===== Automatic Text Boxing ===== */
+
+/* Any text container directly in body, or inside .screen__content, etc. */
+body > *:not(.card):not(.btn):not(.icon-btn),
+.screen__content > *:not(.card):not(.btn):not(.icon-btn) {
+  background: #fff;
+  color: var(--text);
+  padding: 16px 20px;
+  margin: 12px 0;
+  border-radius: var(--r-md);
+  max-width: 720px;
+  width: 100%;
+  line-height: 1.6;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* Headings get extra margin inside box */
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Paragraphs auto spacing */
+p { margin: 0 0 12px; }
+
+/* Lists inside boxes */
+ul, ol {
+  margin: 0 0 12px 20px;
+  padding: 0;
+}
+
+/* Accent variant for highlight */
+.accent-text {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+/* Dark mode variant applied automatically */
+@media (prefers-color-scheme: dark) {
+  body > *:not(.card):not(.btn):not(.icon-btn),
+  .screen__content > *:not(.card):not(.btn):not(.icon-btn) {
+    background: #2a2a2a;
+    color: #f4f4f4;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+}
+
+/* ===== Screen Layout System ===== */
+
+.screen {
   min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--main-bg);
+}
+
+.screen__header,
+.screen__footer {
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
 }
+
+.screen__header {
+  color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.screen__content {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  padding: 24px;
+  width: 100%;
+}
+
+.container {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+}
+
+/* Layout utils */
+.stack > * + * { margin-top: var(--stack-gap, 16px); }
+.cluster {
+  display: flex;
+  align-items: center;
+  gap: var(--cluster-gap, 12px);
+  flex-wrap: wrap;
+}
+.auto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--min, 220px), 1fr));
+  gap: var(--gap, 16px);
+}
+
+/* ===== Card ===== */
 
 .card {
   width: 100%;
   max-width: 360px;
   background: var(--card-bg);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   padding: 24px;
   position: relative;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: var(--shadow-md);
   border: 2px solid var(--card-border);
   text-align: center;
 }
 
+/* ===== Buttons (kept from before) ===== */
+
+.btn {
+  --btn-bg: var(--secondary);
+  --btn-text: #000;
+  --btn-border: var(--secondary-border);
+  --btn-hover: var(--secondary-hover);
+  --btn-active: #ddd;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease;
+  text-decoration: none;
+  user-select: none;
+}
+.btn:hover { background: var(--btn-hover); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.btn:active { transform: translateY(0); background: var(--btn-active); }
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--focus) / var(--ring-opacity)), 0 0 0 1.5px #fff inset;
+}
+.btn--sm { padding: 8px 14px; font-size: 14px; border-radius: var(--r-sm); }
+.btn--lg { padding: 14px 24px; font-size: 16px; border-radius: var(--r-lg); }
+.btn--block { display: flex; width: 100%; }
+.btn .icon { display: inline-flex; width: 1.15em; height: 1.15em; }
+.btn--icon { width: 40px; height: 40px; padding: 0; border-radius: 999px; }
+.btn--primary { --btn-bg: var(--primary); --btn-text: #000; --btn-border: transparent; --btn-hover: var(--primary-hover); --btn-active: var(--primary-active); }
+.btn--ghost { --btn-bg: transparent; --btn-text: #000; --btn-border: transparent; --btn-hover: var(--ghost-hover); --btn-active: rgba(0,0,0,.08); }
+.btn--danger { --btn-bg: var(--danger); --btn-text: #000; --btn-border: transparent; --btn-hover: var(--danger-hover); --btn-active: var(--danger-active); }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+
+/* ===== Icon button ===== */
 .icon-btn {
   position: absolute;
   top: 12px;
@@ -39,8 +204,8 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #f3f3f3;
-  border: 1px solid #ddd;
+  background: var(--secondary);
+  border: 1px solid var(--secondary-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -49,63 +214,27 @@ body {
 }
 .icon-btn:hover {
   transform: scale(1.08) rotate(-8deg);
-  background: #e7e7e7;
-  box-shadow: 0 2px 8px rgba(139,92,126,0.10);
+  background: var(--secondary-hover);
+  box-shadow: var(--shadow-sm);
 }
 
+/* ===== Typography ===== */
 .title {
   font-size: 28px;
   font-weight: 300;
   letter-spacing: 4px;
-  color: #222;
+  color: var(--text);
   margin: 6px 0;
 }
-
 .subtitle {
   color: var(--accent);
   font-family: monospace;
   margin-top: 6px;
 }
+.progress { margin-top: 12px; font-family: monospace; color: var(--muted-text); }
+.divider { width: 66%; height: 1px; background: #eee; margin: 18px auto; }
 
-.start-btn {
-  margin-top: 18px;
-  padding: 12px 28px;
-  background: var(--primary);
-  color: #000;
-  border-radius: 12px;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: transform .15s ease, background .15s ease;
-}
-.start-btn:hover { transform: scale(1.03); background: #7a9c7a; }
-
-.progress {
-  margin-top: 12px;
-  font-family: monospace;
-}
-
-.divider {
-  width: 66%;
-  height: 1px;
-  background: #eee;
-  margin: 18px auto;
-}
-
-.fail-btn {
-  padding: 8px 20px;
-  background: #F3C6C6;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
-}
-.fail-btn:hover {
-  transform: scale(1.04);
-  background: #e6b3b3;
-  box-shadow: 0 2px 8px rgba(139,92,126,0.10);
-}
-
+/* ===== Streak counter ===== */
 .streak-counter {
   display: flex;
   align-items: center;
@@ -114,12 +243,7 @@ body {
   margin-bottom: 2px;
   gap: 4px;
 }
-.streak-num {
-  font-size: 28px;
-  font-family: monospace;
-  color: #222;
-  font-weight: 500;
-}
+.streak-num { font-size: 28px; font-family: monospace; color: var(--text); font-weight: 500; }
 .streak-fire {
   font-size: 28px;
   display: inline-block;
@@ -132,4 +256,29 @@ body {
   40% { transform: translateY(0) scale(1); }
   60% { transform: translateY(-3px) scale(1.05); }
   80% { transform: translateY(0) scale(1); }
+}
+
+/* ===== Dark mode tweaks ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f4f4f4;
+    --muted-text: #cfcfcf;
+    --card-bg: #1c1c1c;
+    --secondary: #2a2a2a;
+    --secondary-hover: #333333;
+    --secondary-border: #3a3a3a;
+    --ghost-hover: rgba(255,255,255,.06);
+    --ring-opacity: .36;
+    --danger: #9f5a5a;
+    --danger-hover: #a96b6b;
+    --danger-active: #b17a7a;
+  }
+  body { background: #1a1321; }
+  .divider { background: rgba(255,255,255,.08); }
+  .card { border-color: rgba(139,170,139,0.5); }
+}
+
+/* Timer and word count bar in Markdown editor */
+.markdown-editor-bar {
+  color: #000 !important;
 }
