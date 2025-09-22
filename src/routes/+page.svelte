@@ -7,6 +7,10 @@
   function handleProfile() {
     goto('/ProfileScreen');
   }
+
+    function failurePage() {
+    goto('/failureScreen');
+  }
 </script>
 
 <style>
@@ -164,6 +168,6 @@
     <button class="start-btn" on:click={handleStart}>START</button>
     <div class="progress">0 / 300</div>
     <div class="divider" aria-hidden="true"></div>
-    <button class="fail-btn" on:click={() => goto('/fails')}>VIEW FAILS</button>
+    <button class="fail-btn" on:click={failurePage}>VIEW FAILS</button>
   </div>
 </div>
