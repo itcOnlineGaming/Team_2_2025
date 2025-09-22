@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import WinPopup from '$lib/components/WinPopup.svelte';
 
   let fileContent = '';
   let fileName = '';
@@ -14,6 +15,7 @@
   let secondsLeft = 60;
   let timerId: any = null;
   let hasFinished = false;
+  let showWinPopup = false;
 
   function formatTime(s: number) {
     const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -41,9 +43,21 @@
       // Failure screen
       window.location.href = '/failureScreen';
     } else {
-      // Home screen
-      window.location.href = '/';
+      // Win popup, then home
+      showWinPopup = true;
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
     }
+  }
+  // Show win popup immediately if wordCount is reached before timer ends
+  $: if (wordCount >= 50 && !showWinPopup && !hasFinished) {
+    showWinPopup = true;
+    hasFinished = true;
+    clearInterval(timerId);
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 2000);
   }
 
   onMount(() => {
@@ -250,6 +264,9 @@
 <p>This is a placeholder for the writing experience.</p>
 
 {#if true}
+  {#if showWinPopup}
+    <WinPopup onClose={() => (showWinPopup = false)} />
+  {/if}
   <h2>Editing Markdown:</h2>
 
   <!-- Timer + Word Count bar -->

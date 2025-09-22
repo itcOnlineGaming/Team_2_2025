@@ -7,7 +7,7 @@
   const testImages = [
     {
       id: 1,
-  src: '/src/lib/assets/IMG_7766.webp',
+  src: 'src/lib/assets/download.jpeg',
       alt: 'Beautiful landscape',
       width: 400,
       height: 300
@@ -21,7 +21,7 @@
     },
     {
       id: 3,
-  src: '/src/lib/assets/IMG_7848.webp', // This will use placeholder
+  src: 'src/lib/assets/Screenshot 2025-09-22 162707.png', // This will use placeholder
       alt: 'Random placeholder image',
       width: 350,
       height: 250
@@ -32,7 +32,20 @@
       alt: 'This will show error state',
       width: 400,
       height: 300
-    }
+    },
+     {
+      id: 5,
+  src: 'src/lib/assets/IMG_7848.webp', // This will use placeholder
+      alt: 'Random placeholder image',
+      width: 350,
+      height: 250
+    }, {
+      id: 6,
+  src: 'src/lib/assets/IMG_7766.webp', // This will use placeholder
+      alt: 'Random placeholder image',
+      width: 350,
+      height: 250
+    },
   ];
 </script>
 
