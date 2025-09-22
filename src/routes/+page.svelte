@@ -44,6 +44,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    cursor: pointer;
+  }
+  .icon-btn:hover {
+    transform: scale(1.08) rotate(-8deg);
+    background: #e7e7e7;
+    box-shadow: 0 2px 8px rgba(139,92,126,0.10);
   }
 
   .title {
@@ -91,12 +98,46 @@
     border-radius: 12px;
     border: none;
     cursor: pointer;
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .fail-btn:hover {
+    transform: scale(1.04);
+    background: #e6b3b3;
+    box-shadow: 0 2px 8px rgba(139,92,126,0.10);
+  }
+
+  .streak-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 8px;
+    margin-bottom: 2px;
+    gap: 4px;
+  }
+  .streak-num {
+    font-size: 28px;
+    font-family: monospace;
+    color: #222;
+    font-weight: 500;
+  }
+  .streak-fire {
+    font-size: 28px;
+    display: inline-block;
+    animation: fire-bounce 1.2s infinite cubic-bezier(.68,-0.55,.27,1.55);
+    will-change: transform;
+  }
+  @keyframes fire-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    20% { transform: translateY(-6px) scale(1.1); }
+    40% { transform: translateY(0) scale(1); }
+    60% { transform: translateY(-3px) scale(1.05); }
+    80% { transform: translateY(0) scale(1); }
   }
 </style>
 
 <div class="fullscreen">
   <div class="card" role="region" aria-label="Start card">
-    <button class="icon-btn" aria-label="profile">
+    <button class="icon-btn" aria-label="profile" on:click={() => goto('/profile')}>
       <!-- small profile icon -->
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M15.75 7.5a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"></path>
@@ -104,15 +145,21 @@
       </svg>
     </button>
 
+    <!-- Streak Counter -->
+    <div class="streak-counter">
+      <span class="streak-num">0</span>
+      <span class="streak-fire" aria-label="streak fire" role="img">🔥</span>
+    </div>
+
     <div>
       <div class="title">DAY ONE</div>
-      <div class="subtitle">Start your journey strong!</div>
+      <div class="subtitle">Every expert was once a beginner. Keep going!</div>
       <div style="height:10px"></div>
     </div>
 
     <button class="start-btn" on:click={handleStart}>START</button>
     <div class="progress">0 / 300</div>
     <div class="divider" aria-hidden="true"></div>
-    <button class="fail-btn">VIEW FAILS</button>
+    <button class="fail-btn" on:click={() => goto('/fails')}>VIEW FAILS</button>
   </div>
 </div>
