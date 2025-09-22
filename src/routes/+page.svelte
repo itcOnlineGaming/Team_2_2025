@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
 
   function handleStart() {
-    goto('/start');
+    goto('/doc');
   }
 </script>
 
