@@ -16,11 +16,26 @@
     showColorPicker = false;
   }
 
+  function getRandomUsername() {
+    const names = ['John Doe', 'Jane Smith', 'Alex Lee', 'Sam Patel', 'Chris Kim', 'Taylor Fox', 'Jordan Ray', 'Morgan Wu'];
+    return names[Math.floor(Math.random() * names.length)];
+  }
+  function getRandomInt(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+  function getRandomStreak() {
+    const streak = getRandomInt(0, 30);
+    return streak > 0 ? `${streak} 🔥` : '0';
+  }
+  function getRandomWPM() {
+    return getRandomInt(20, 120).toString();
+  }
+
   const stats = [
-    { label: 'Username', value: 'John Doe' },
-    { label: 'Days Completed', value: '20' },
-    { label: 'Writing Streak', value: '6 🔥' },
-    { label: 'Average Words per Minute', value: '56' }
+    { label: 'Username', value: getRandomUsername() },
+    { label: 'Days Completed', value: getRandomInt(1, 100).toString() },
+    { label: 'Writing Streak', value: getRandomStreak() },
+    { label: 'Average Words per Minute', value: getRandomWPM() }
   ];
 
   const failedGallery = Array.from({ length: 8 }).map((_, i) => ({
@@ -49,12 +64,7 @@
     <!-- Avatar -->
     <div class="avatar-container">
   <div class="avatar-img-wrapper">
-        <img
-          src="https://marinesanctuary.org/wp-content/uploads/2021/08/SBNMS_Gray-Seal_Matt-McIntosh_NOAA-e1630332861699.jpg"
-          alt="Profile avatar"
-          class="avatar-img"
-          loading="lazy"
-        />
+          <img src="src/lib/assets/images.jpeg" alt="Profile avatar" class="avatar-img" loading="lazy" />
       </div>
     </div>
 
