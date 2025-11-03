@@ -1,41 +1,47 @@
-<script>
+<script lang="ts">
   import { writable } from 'svelte/store';
+  import { onMount } from 'svelte';
 
-  let customMinutes = 25; // default input
-  const timeLeft = writable(customMinutes * 60);
-  let interval = null;
-  let isRunning = false;
+  let minutes: number = 0;
+  let seconds: number = 10;
+  const timeLeft = writable(10);
+  let interval: ReturnType<typeof setInterval> | null = null;
+  let isRunning: boolean = false;
   
-  // Popup states
-  let showWelcomePopup = true;
-  let showThankYouNotification = false;
+  let showCompletionNotification: boolean = false;
 
-  $: totalSeconds = customMinutes * 60;
-  $: progress = 1 - $timeLeft / totalSeconds;
+  $: totalSeconds = minutes * 60 + seconds;
 
-  // Format seconds -> mm:ss
-  $: formattedTime = formatTime($timeLeft);
+  onMount(() => {
+    timeLeft.set(totalSeconds);
+  });
 
-  function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  // Cap seconds at 60
+  $: if (seconds >= 60) {
+    minutes += Math.floor(seconds / 60);
+    seconds = seconds % 60;
   }
 
+  function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  $: formattedTime = formatTime($timeLeft);
+
   function startTimer() {
-    if (interval) return; // prevent duplicates
+    if (interval || $timeLeft <= 0) return;
     isRunning = true;
     interval = setInterval(() => {
       timeLeft.update(t => {
         if (t <= 1) {
-          clearInterval(interval);
+          clearInterval(interval as ReturnType<typeof setInterval>);
           interval = null;
           isRunning = false;
-          // Show thank you notification
-          showThankYouNotification = true;
+          showCompletionNotification = true;
           setTimeout(() => {
-            showThankYouNotification = false;
-          }, 5000); // Hide after 5 seconds
+            showCompletionNotification = false;
+          }, 5000);
           return 0;
         }
         return t - 1;
@@ -44,9 +50,11 @@
   }
 
   function pauseTimer() {
-    clearInterval(interval);
-    interval = null;
-    isRunning = false;
+    if (interval) {
+      clearInterval(interval);
+      interval = null;
+      isRunning = false;
+    }
   }
 
   function toggleTimer() {
@@ -56,219 +64,271 @@
 
   function setCustomTime() {
     pauseTimer();
-    timeLeft.set(customMinutes * 60);
+    const total = Math.max(1, totalSeconds);
+    timeLeft.set(total);
   }
 
-  function closeWelcomePopup() {
-    showWelcomePopup = false;
+  function resetTimer() {
+    pauseTimer();
+    const total = Math.max(1, totalSeconds);
+    timeLeft.set(total);
   }
 
-  function closeThankYouNotification() {
-    showThankYouNotification = false;
+  function closeCompletionNotification() {
+    showCompletionNotification = false;
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleTimer();
+    }
+  }
+
+  function handleInputKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter') {
+      setCustomTime();
+    }
   }
 </script>
 
-<!-- Welcome Popup -->
-{#if showWelcomePopup}
-  <div class="popup-overlay">
-    <div class="popup-content">
-      <h2>Welcome! 🌲</h2>
-      <p>Thank you for taking the time to test the countdown timer.</p>
-      <p>Set your desired time and click "Start" to begin.</p>
-      <button class="primary-btn" on:click={closeWelcomePopup}>
-        Got it!
-      </button>
+{#if showCompletionNotification}
+  <div class="notification-wrapper">
+    <div class="notification">
+      <div class="notification-content">
+        <span class="notification-icon">🎉</span>
+        <span class="notification-text">Countdown complete!</span>
+        <button class="close-btn" on:click={closeCompletionNotification}>×</button>
+      </div>
     </div>
   </div>
 {/if}
 
-<!-- Thank You Notification -->
-{#if showThankYouNotification}
-  <div class="notification">
-    <div class="notification-content">
-      <span class="notification-icon">✨</span>
-      <span class="notification-text">Great job! Timer completed successfully.</span>
-      <button class="close-btn" on:click={closeThankYouNotification}>×</button>
+<div class="timer-container">
+  <div class="time-display-container">
+    <div class="time-label">Countdown Timer</div>
+    
+    <div 
+      class="time-display" 
+      on:click={toggleTimer} 
+      on:keydown={handleKeydown} 
+      role="button" 
+      tabindex="0"
+    >
+      <h1>{formattedTime}</h1>
     </div>
-  </div>
-{/if}
 
-<div class="timer {isRunning ? 'running' : ''}">
-   <div class="circle">
-    <svg viewBox="0 0 120 120" class="progress-ring">
-      <circle
-        class="progress-ring__bg"
-        cx="60"
-        cy="60"
-        r="54"
-        stroke-width="8"
-      />
-      <circle
-        class="progress-ring__progress"
-        cx="60"
-        cy="60"
-        r="54"
-        stroke-width="8"
-        stroke-dasharray={2 * Math.PI * 54}
-        stroke-dashoffset={(1 - progress) * 2 * Math.PI * 54}
-      />
-    </svg>
-    <!-- 🌲 Tree in the middle -->
-    <div class="tree">
-      🌲
-    </div>
-    <div class="time-display">
-       <h2>{formattedTime}</h2>
+    <div class="status-indicator">
+      {#if isRunning}
+        <span class="text-green">Running...</span>
+      {:else if $timeLeft < totalSeconds && $timeLeft > 0}
+        <span class="text-yellow">Paused</span>
+      {:else if $timeLeft === 0}
+        <span class="text-red">Finished</span>
+      {:else}
+        <span class="text-gray">Ready</span>
+      {/if}
     </div>
   </div>
   
-
   <div class="controls">
-    <label>
-      <input type="number" min="1" bind:value={customMinutes} />
-      minutes
-    </label>
+    <div class="input-row">
+      <div class="input-wrapper">
+        <label for="minutes">Minutes</label>
+        <input 
+          id="minutes"
+          type="number" 
+          bind:value={minutes} 
+          on:keydown={handleInputKeydown}
+          class="time-input"
+          min="0"
+          max="99"
+        />
+      </div>
+      <div class="input-wrapper">
+        <label for="seconds">Seconds</label>
+        <input 
+          id="seconds"
+          type="number" 
+          bind:value={seconds} 
+          on:keydown={handleInputKeydown}
+          class="time-input"
+          min="0"
+          max="59"
+        />
+      </div>
+      <button on:click={setCustomTime} class="btn-set">Set</button>
+    </div>
 
-    <button on:click={setCustomTime}>Set</button>
-    <button on:click={toggleTimer}>
+    <button on:click={toggleTimer} class="btn-primary">
       {isRunning ? 'Pause' : 'Start'}
     </button>
-    <button on:click={() => timeLeft.set(0)}>Reset</button>
+    <button on:click={resetTimer} class="btn-reset">
+      Reset
+    </button>
   </div>
 </div>
 
 <style>
-  .timer {
+  .timer-container {
     text-align: center;
-    font-family: monospace;
-    padding: 1rem;
-  }
-  .circle {
-    position: relative;
-    width: 150px;
-    height: 150px;
-    margin: 1.5rem auto;
-  }
-
-  .progress-ring {
-    transform: rotate(-90deg);
+    padding: 2rem 0;
     width: 100%;
-    height: 100%;
   }
 
-  .progress-ring__bg {
-    fill: none;
-    stroke: #dfe6e9;
+  .time-display-container {
+    margin-bottom: 2rem;
   }
 
-  .progress-ring__progress {
-    fill: none;
-    stroke: #2ecc71;
-    stroke-linecap: round;
-    transition: stroke-dashoffset 0.35s;
-  }
-
-  .tree {
-    position: absolute;
-    top: 70%;
-    left: 50%;
-    font-size: 4rem;
-    transform: translate(-50%, -70%);
-    transition: transform 0.3s ease;
-  }
-
-  
-  .running .tree {
-    font-size: 4.5rem;
-    transform: translate(-50%, -72%) scale(1.05);
+  .time-label {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 1rem;
   }
 
   .time-display {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    outline: none;
+    transition: box-shadow 0.2s, background 0.2s;
+    width: 100%; 
+    padding: 1rem 0;
+    cursor: pointer;
+    border-radius: 12px;
   }
 
-  h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+  .time-display:hover, .time-display:focus {
+    background: rgba(102, 126, 234, 0.05);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
   }
+
+  .time-display h1 {
+    font-size: 5rem; 
+    font-weight: 800;
+    color: #1f2937;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    letter-spacing: -2px; 
+    transition: color 0.3s ease;
+  }
+
+  .time-display:hover h1 {
+    color: #667eea;
+  }
+
+  .status-indicator {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    text-transform: uppercase;
+  }
+
+  .text-green { color: #10b981; }
+  .text-yellow { color: #f59e0b; }
+  .text-gray { color: #9ca3af; }
+  .text-red { color: #ef4444; }
+
   .controls {
     display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
-  }
-  input {
-    width: 4rem;
-    text-align: center;
-  }
-  button {
-    padding: 0.5rem 1rem;
-    border: 1px solid #444;
-    border-radius: 6px;
-    background: #eee;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #ddd;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
   }
 
-  /* Welcome Popup Styles */
-  .popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
+  .input-row {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
-  .popup-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    max-width: 400px;
+  .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-wrapper label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    text-align: left;
+  }
+
+  .time-input {
+    width: 100%;
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.3s ease;
+    padding: 0.875rem;
+    border: 2px solid #d1d5db;
+    border-radius: 12px;
+    font-size: 1.25rem;
+    outline: none;
+    box-sizing: border-box;
+    color: #111827;
+    font-weight: 700;
+    background: white;
   }
 
-  .popup-content h2 {
-    margin: 0 0 1rem 0;
-    color: #2ecc71;
+  .time-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
-  .popup-content p {
-    margin: 0.5rem 0;
-    color: #555;
-    line-height: 1.5;
-  }
-
-  .primary-btn {
-    margin-top: 1.5rem;
-    padding: 0.75rem 2rem;
-    background: #2ecc71;
-    color: white;
+  .controls button {
+    padding: 16px;
     border: none;
-    border-radius: 6px;
+    border-radius: 12px;
+    font-weight: 700;
     font-size: 1rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    width: 100%;
   }
 
-  .primary-btn:hover {
-    background: #27ae60;
+  /* MATCHING PROJECT BOARD BUTTON STYLES */
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    color: white;
+    font-size: 1.1rem;
   }
 
-  /* Thank You Notification Styles */
-  .notification {
+  .btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-set {
+    background: #e5e7eb;
+    color: #374151;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 0.875rem 1.25rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    width: auto;
+    align-self: flex-end;
+  }
+
+  .btn-set:hover {
+    background: #d1d5db;
+  }
+
+  .btn-reset {
+    background: #e5e7eb;
+    color: #374151;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-reset:hover {
+    background: #d1d5db;
+  }
+
+  /* NOTIFICATION */
+  .notification-wrapper {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -277,11 +337,11 @@
   }
 
   .notification-content {
-    background: #2ecc71;
+    background: #10b981;
     color: white;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -294,11 +354,11 @@
 
   .notification-text {
     flex: 1;
-    font-family: system-ui, -apple-system, sans-serif;
+    font-weight: 600;
   }
 
   .close-btn {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
     color: white;
     font-size: 1.5rem;
@@ -311,36 +371,34 @@
     justify-content: center;
     border-radius: 4px;
     transition: background 0.2s;
+    line-height: 1;
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    background: rgba(255, 255, 255, 0.3);
   }
 
   @keyframes slideInRight {
-    from {
-      opacity: 0;
-      transform: translateX(100px);
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @media (max-width: 640px) {
+    .time-display h1 {
+      font-size: 4rem;
     }
-    to {
-      opacity: 1;
-      transform: translateX(0);
+    
+    .input-row {
+      flex-wrap: wrap;
+    }
+
+    .input-wrapper {
+      min-width: calc(50% - 0.375rem);
+    }
+
+    .btn-set {
+      width: 100%;
+      order: 3;
     }
   }
 </style>

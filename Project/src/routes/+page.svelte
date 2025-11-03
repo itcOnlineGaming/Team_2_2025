@@ -1,22 +1,59 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { onMount } from 'svelte';
+
+  interface ChecklistItem { id: string; text: string; completed: boolean; }
 
   let showFeelingModal = false;
   let selectedFeeling: number | null = null;
   let feelingsLog: Array<{date: string, feeling: number, note: string}> = [];
   let currentNote = '';
 
-  // Load feelings log from localStorage on mount
-  import { onMount } from 'svelte';
+  let showWelcomePopup = true;
+  let agreedToTest = false;
+
+  let checklist: ChecklistItem[] = [
+    { id: 'add_column', text: 'Add a new column', completed: false },
+    { id: 'add_task', text: 'Add a task to any column', completed: false }
+  ];
+
   onMount(() => {
     const saved = localStorage.getItem('feelingsLog');
     if (saved) {
       feelingsLog = JSON.parse(saved);
     }
+
+    localStorage.setItem('agreedToTest', 'true');
+    const savedChecklist = localStorage.getItem('checklist','true');
+    
+    //if (savedAgreement === 'true') {
+      //showWelcomePopup = false;
+      //agreedToTest = true;
+    //}
+    
+    if (savedChecklist) {
+      checklist = JSON.parse(savedChecklist);
+    }
   });
+
+  function clearChecklist() {
+     checklist = checklist.map(item => ({ ...item, completed: false }));
+     localStorage.removeItem('checklist');
+  }
+
+  function handleAgree() {
+    if (agreedToTest) {
+      localStorage.setItem('agreedToTest', 'true');
+      showWelcomePopup = false;
+    }
+  }
 
   function goToBoard() {
     goto('/board');
+  }
+
+  function goToCountDown() {
+    goto('/countdown');
   }
 
   function openFeelingModal(level: number) {
@@ -64,6 +101,49 @@
 </script>
 
 <main>
+  <!-- Welcome Popup Overlay -->
+  {#if showWelcomePopup}
+    <div class="welcome-overlay">
+      <div class="welcome-popup">
+        <h2>Welcome to the Project Board Test</h2>
+        <p>Hello! If you are here, you are likely helping us test our app. We are a group of 7 students conducting this usability test. At the end, there will be a short questionnaire for your feedback.</p>
+        <p>This is just a reminder: we are not collecting or storing any sensitive data. Your responses are completely anonymous. We appreciate any feedback, so please share your honest thoughts to help us improve our app!</p>
+
+        
+        <div class="agreement-section">
+          <label class="checkbox-label">
+            <input type="checkbox" bind:checked={agreedToTest} />
+            <span>I agree to participate in this test and am comfortable using this application, as well as completing the short questionnaire at the end.</span>
+          </label>
+        </div>
+
+        <button 
+          class="agree-button" 
+          on:click={handleAgree}
+          disabled={!agreedToTest}
+        >
+          Get Started
+        </button>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Checklist -->
+  {#if !showWelcomePopup}
+    <div class="checklist">
+      <h3>✓ Test Tasks</h3>
+      {#each checklist as item (item.id)}
+        <div class="checklist-item" class:completed={item.completed}>
+          <span class="checkbox-display">{item.completed ? '✓' : ''}</span>
+          <span class="checklist-text">{item.text}</span>
+        </div>
+      {/each}
+      <button class="clear-checklist-button" on:click={clearChecklist}>
+        Clear Checklist
+    </button>
+  </div>
+  {/if}
+
   <section class="container">
     <div class="header">
       <div class="title-badge">
@@ -76,7 +156,11 @@
     </div>
 
     <button class="main-button" on:click={goToBoard}>
-      🚀 Go to Project Board
+      Go to Project Board
+    </button>
+
+    <button class="main-button" on:click={goToCountDown}>
+      Go to Countdown
     </button>
 
     <div class="feelings-section">
@@ -119,17 +203,6 @@
         </div>
       {/if}
     </div>
-    
-      <button class="icon-btn" style="top: auto; bottom: 100px; right: 100px;" aria-label="countdown timer" on:click={() => goto('/countdown')}>
-      <!-- timer/countdown icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="13" r="8"></circle>
-        <path d="M12 9v4l2 2"></path>
-        <path d="M8 3h8"></path>
-        <path d="M12 3v2"></path>
-      </svg>
-      Countdown Timer
-    </button>
     
   </section>
 </main>
@@ -188,6 +261,179 @@
     min-height: 100vh;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
     padding: 20px;
+  }
+
+  /* Welcome Popup Styles */
+  .welcome-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+  }
+
+  .welcome-popup {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    animation: slideIn 0.4s ease;
+  }
+
+  .welcome-popup h2 {
+    margin: 0 0 16px 0;
+    color: #333;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .welcome-popup p {
+    margin: 0 0 24px 0;
+    color: #666;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  .agreement-section {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    margin-top: 2px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .checkbox-label span {
+    color: #374151;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .clear-checklist-button {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #f87171; /* red-ish */
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-checklist-button:hover {
+  background: #ef4444;
+}
+
+
+  .agree-button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .agree-button:hover:not(:disabled) {
+    transform: scale(1.02);
+  }
+
+  .agree-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Checklist Styles */
+  .checklist {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    min-width: 250px;
+    z-index: 1500;
+  }
+
+  .checklist h3 {
+    margin: 0 0 16px 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background: #f9fafb;
+    transition: all 0.3s ease;
+  }
+
+  .checklist-item.completed {
+    background: #d1fae5;
+  }
+
+  .checkbox-display {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .checklist-item.completed .checkbox-display {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+  }
+
+  .checklist-text {
+    color: #374151;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .checklist-item.completed .checklist-text {
+    color: #059669;
+    font-weight: 500;
   }
 
   .container {
@@ -411,6 +657,28 @@
     margin-left: 16px;
   }
 
+  .icon-btn {
+    background: white;
+    color: #667eea;
+    padding: 12px 20px;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .icon-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: scale(1.05);
+  }
+
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -445,6 +713,11 @@
       transform: scale(1);
       opacity: 1;
     }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .modal-header {
@@ -578,6 +851,13 @@
 
     .modal-title {
       font-size: 24px;
+    }
+
+    .checklist {
+      top: 10px;
+      right: 10px;
+      min-width: 220px;
+      padding: 16px;
     }
   }
 </style>
