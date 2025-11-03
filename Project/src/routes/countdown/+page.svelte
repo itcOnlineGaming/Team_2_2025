@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
+  import { goto } from '$app/navigation';
+  import { tick } from 'svelte';
 
   interface ChecklistItem {
     id: string;
@@ -12,6 +14,8 @@
   let checklist: ChecklistItem[] = [
     { id: 'add_column', text: 'Add a new column', completed: false },
     { id: 'add_task', text: 'Add a task to any column', completed: false },
+    { id: 'remove_column', text: 'Remove a column', completed: false },
+    { id: 'remove_task', text: 'Remove a task from any column', completed: false },
     { id: 'set_time', text: 'Set a time on the countdown', completed: false },
     { id: 'start_timer', text: 'Start the countdown timer', completed: false },
     { id: 'stop_timer', text: 'Stop/pause the countdown timer', completed: false }
@@ -24,6 +28,8 @@
   let interval: ReturnType<typeof setInterval> | null = null;
   let isRunning: boolean = false;
   let showCompletionNotification: boolean = false;
+  let notificationMessage = '';
+
 
   $: totalSeconds = minutes * 60 + seconds;
   $: if (seconds >= 60) {
@@ -39,12 +45,37 @@
     timeLeft.set(totalSeconds);
   });
 
-  function updateChecklist(id: string) {
-    checklist = checklist.map(item =>
-      item.id === id ? { ...item, completed: true } : item
-    );
-    localStorage.setItem('checklist', JSON.stringify(checklist));
+  function triggerPopup(message: string) {
+  notificationMessage = message;
+  showCompletionNotification = true;
+
+  // Automatically hide after 5 seconds
+  setTimeout(() => {
+    showCompletionNotification = false;
+  }, 5000);
+}
+
+ async function updateChecklist(itemId: string) {
+  checklist = checklist.map(item =>
+    item.id === itemId ? { ...item, completed: true } : item
+  );
+  localStorage.setItem('checklist', JSON.stringify(checklist));
+
+  await tick();
+
+  const allDone = checklist.every(item => item.completed);
+  if (allDone) {
+    triggerPopup('✅ All tasks completed! Redirecting...');
+    console.log('Checklist:', checklist.map(i => `${i.id}: ${i.completed}`));
+    setTimeout(() => {
+      try {
+        goto('/end'); // SvelteKit
+      } catch {
+        window.location.href = '/end'; // fallback for plain Svelte
+      }
+    }, 2500);
   }
+}
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -140,7 +171,7 @@
         <div class="notification">
           <div class="notification-content">
             <span class="notification-icon">🎉</span>
-            <span class="notification-text">Countdown complete!</span>
+            <span class="notification-text">{notificationMessage}</span>
             <button class="close-btn" on:click={closeCompletionNotification}>×</button>
           </div>
         </div>

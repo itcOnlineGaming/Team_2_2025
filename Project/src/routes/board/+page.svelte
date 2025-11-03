@@ -1,6 +1,7 @@
 <script lang="ts">
   import Column from '$lib/components/Column.svelte';
   import { onMount } from 'svelte';
+  import { tick } from 'svelte';
 
   interface TaskData { id: number; text: string; }
   interface ColumnData { id: number; title: string; tasks: TaskData[]; }
@@ -22,7 +23,12 @@
   // Checklist state
   let checklist: ChecklistItem[] = [
     { id: 'add_column', text: 'Add a new column', completed: false },
-    { id: 'add_task', text: 'Add a task to any column', completed: false }
+    { id: 'add_task', text: 'Add a task to any column', completed: false },
+    { id: 'remove_column', text: 'Remove a column', completed: false },
+    { id: 'remove_task', text: 'Remove a task from any column', completed: false },
+    { id: 'set_time', text: 'Set a time on the countdown', completed: false },
+    { id: 'start_timer', text: 'Start the countdown timer', completed: false },
+    { id: 'stop_timer', text: 'Stop/pause the countdown timer', completed: false }
   ];
 
   // Success popup for first task/column
@@ -52,12 +58,27 @@
     }
   }
 
-  function updateChecklist(itemId: string) {
-    checklist = checklist.map(item => 
-      item.id === itemId ? { ...item, completed: true } : item
-    );
-    localStorage.setItem('checklist', JSON.stringify(checklist));
+async function updateChecklist(itemId: string) {
+  checklist = checklist.map(item =>
+    item.id === itemId ? { ...item, completed: true } : item
+  );
+  localStorage.setItem('checklist', JSON.stringify(checklist));
+
+  // ✅ Wait for DOM/reactivity to update
+  await tick();
+
+  const allDone = checklist.every(item => item.completed);
+  if (allDone) {
+    triggerPopup('✅ All tasks completed! Redirecting...');
+    setTimeout(() => {
+      try {
+        goto('/end'); // works in SvelteKit
+      } catch {
+        window.location.href = '/end'; // fallback
+      }
+    }, 2500);
   }
+}
 
   function triggerPopup(message: string) {
     popupMessage = message;
@@ -90,6 +111,8 @@
 
   function removeColumn(event: CustomEvent<number>) {
     columns = columns.filter(c => c.id !== event.detail);
+    triggerPopup('🗑️ You removed a column!');
+    updateChecklist('remove_column');
   }
 
   function editColumn(event: CustomEvent<{ id: number, newTitle: string }>) {
@@ -112,6 +135,9 @@
   function removeTask(event: CustomEvent<{ columnId: number, taskId: number }>) {
     const { columnId, taskId } = event.detail;
     columns = columns.map(c => c.id === columnId ? { ...c, tasks: c.tasks.filter(t => t.id !== taskId) } : c);
+
+    triggerPopup('🗑️ You removed a task!');
+    updateChecklist('remove_task');
   }
 </script>
 

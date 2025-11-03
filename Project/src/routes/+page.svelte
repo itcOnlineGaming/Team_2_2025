@@ -14,7 +14,12 @@
 
   let checklist: ChecklistItem[] = [
     { id: 'add_column', text: 'Add a new column', completed: false },
-    { id: 'add_task', text: 'Add a task to any column', completed: false }
+    { id: 'add_task', text: 'Add a task to any column', completed: false },
+    { id: 'remove_column', text: 'Remove a column', completed: false },
+    { id: 'remove_task', text: 'Remove a task from any column', completed: false },
+    { id: 'set_time', text: 'Set a time on the countdown', completed: false },
+    { id: 'start_timer', text: 'Start the countdown timer', completed: false },
+    { id: 'stop_timer', text: 'Stop/pause the countdown timer', completed: false }
   ];
 
   onMount(() => {
