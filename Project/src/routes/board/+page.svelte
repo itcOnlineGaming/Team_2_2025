@@ -1,5 +1,6 @@
 <script lang="ts">
   import Column from '$lib/components/Column.svelte';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
   import { tick } from 'svelte';
 
@@ -50,6 +51,9 @@
       checklist = JSON.parse(savedChecklist);
     }
   });
+  function goBack() {
+    goto('/');
+  }
 
   function handleAgree() {
     if (agreedToTest) {
@@ -64,7 +68,6 @@ async function updateChecklist(itemId: string) {
   );
   localStorage.setItem('checklist', JSON.stringify(checklist));
 
-  // ✅ Wait for DOM/reactivity to update
   await tick();
 
   const allDone = checklist.every(item => item.completed);
@@ -166,6 +169,10 @@ async function updateChecklist(itemId: string) {
       </div>
     </div>
   {/if}
+
+    <button class="main-button" on:click={goBack}>
+      Go to Home page
+    </button>
 
   <!-- Checklist -->
   {#if !showWelcomePopup}
@@ -309,6 +316,29 @@ async function updateChecklist(itemId: string) {
     cursor: not-allowed;
   }
 
+  .main-button {
+    width: 60%;
+    padding: 16px;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .main-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+  }
+
+  .main-button:active {
+    transform: scale(0.95);
+  }
   /* Checklist Styles */
   .checklist {
     position: fixed;

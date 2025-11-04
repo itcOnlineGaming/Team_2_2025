@@ -152,7 +152,7 @@
   <section class="container">
     <div class="header">
       <div class="title-badge">
-        <h1>✨ Task Board App</h1>
+        <h1>✨ Study Guide App ✨</h1>
       </div>
       
       <p class="subtitle">
@@ -161,7 +161,7 @@
     </div>
 
     <button class="main-button" on:click={goToBoard}>
-      Go to Project Board
+      Go to Task Board
     </button>
 
     <button class="main-button" on:click={goToCountDown}>

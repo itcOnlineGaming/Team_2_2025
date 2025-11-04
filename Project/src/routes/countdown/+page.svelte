@@ -45,6 +45,10 @@
     timeLeft.set(totalSeconds);
   });
 
+  function goBack() {
+    goto('/');
+  }
+
   function triggerPopup(message: string) {
   notificationMessage = message;
   showCompletionNotification = true;
@@ -177,6 +181,10 @@
         </div>
       </div>
     {/if}
+    
+    <button class="main-button" on:click={goBack}>
+      Go to Home page
+    </button>
 
     <div class="timer-container">
       <div class="time-display-container">
@@ -430,6 +438,30 @@
 
   .btn-reset:hover {
     background: #d1d5db;
+  }
+
+  .main-button {
+    width: 60%;
+    padding: 16px;
+    margin-bottom: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .main-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+  }
+
+  .main-button:active {
+    transform: scale(0.95);
   }
 
   /* Checklist */
