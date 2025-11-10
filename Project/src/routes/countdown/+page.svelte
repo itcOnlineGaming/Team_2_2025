@@ -255,14 +255,13 @@
 
 <style>
   main {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    min-height: 100vh;
-    padding: 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  padding: 32px;
+  background: linear-gradient(135deg, #228B22 0%, #2E8B57 50%, #6B8E23 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   }
 
   .timer-card {

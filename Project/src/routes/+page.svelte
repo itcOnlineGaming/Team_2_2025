@@ -264,7 +264,7 @@
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background: linear-gradient(135deg, #0b532f 0%, #2a522c 50%, #0e6b1e 100%);
     padding: 20px;
   }
 
@@ -484,20 +484,20 @@
     width: 100%;
     padding: 16px;
     margin-bottom: 40px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #16411a 0%, #2edd62 100%);
     color: white;
     font-size: 20px;
     font-weight: 700;
     border: none;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 25px rgba(87, 170, 70, 0.3);
     cursor: pointer;
     transition: all 0.2s;
   }
 
   .main-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 15px 35px rgba(48, 109, 61, 0.4);
   }
 
   .main-button:active {
@@ -505,7 +505,7 @@
   }
 
   .feelings-section {
-    background: linear-gradient(135deg, #eff6ff 0%, #f3e8ff 100%);
+    background: linear-gradient(135deg, #228B22 0%, #2E8B57 50%, #6B8E23 100%);
     border-radius: 16px;
     padding: 32px;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -666,7 +666,7 @@
     background: white;
     color: #667eea;
     padding: 12px 20px;
-    border: 2px solid #667eea;
+    border: 2px solid #327c24;
     border-radius: 12px;
     font-size: 14px;
     font-weight: 600;
@@ -772,11 +772,10 @@
     transition: border-color 0.2s;
   }
 
-  .modal-textarea:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  }
+.modal-textarea:focus {
+  border-color: #228B22;
+  box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.2);
+}
 
   .modal-buttons {
     display: flex;
