@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { onMount } from 'svelte';
 
   interface ChecklistItem { id: string; text: string; completed: boolean; }
@@ -56,11 +57,11 @@
   }
 
   function goToBoard() {
-    goto('/board');
+    goto(`${base}/board`);
   }
 
   function goToCountDown() {
-    goto('/countdown');
+    goto(`${base}/countdown`);
   }
 
   function openFeelingModal(level: number) {
