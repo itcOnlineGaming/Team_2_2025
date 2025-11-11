@@ -11,7 +11,7 @@ const config = {
       fallback: 'index.html',
     }),
     paths: {
-      base: dev ? '' : '/Team_2_2025',
+      base: '/Team_2_2025',
     },
   },
 };
