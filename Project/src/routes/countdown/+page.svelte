@@ -3,6 +3,7 @@
   import { writable } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { tick } from 'svelte';
+  import { base } from '$app/paths';
 
   interface ChecklistItem {
     id: string;
@@ -23,13 +24,12 @@
 
   // Timer variables
   let minutes: number = 0;
-  let seconds: number = 10;
-  const timeLeft = writable(10);
+  let seconds: number = 25;
+  const timeLeft = writable(25);
   let interval: ReturnType<typeof setInterval> | null = null;
   let isRunning: boolean = false;
   let showCompletionNotification: boolean = false;
   let notificationMessage = '';
-
 
   $: totalSeconds = minutes * 60 + seconds;
   $: if (seconds >= 60) {
@@ -46,40 +46,36 @@
   });
 
   function goBack() {
-    goto('/');
+    goto(`${base}/`);
   }
 
   function triggerPopup(message: string) {
-  notificationMessage = message;
-  showCompletionNotification = true;
-
-  // Automatically hide after 5 seconds
-  setTimeout(() => {
-    showCompletionNotification = false;
-  }, 5000);
-}
-
- async function updateChecklist(itemId: string) {
-  checklist = checklist.map(item =>
-    item.id === itemId ? { ...item, completed: true } : item
-  );
-  localStorage.setItem('checklist', JSON.stringify(checklist));
-
-  await tick();
-
-  const allDone = checklist.every(item => item.completed);
-  if (allDone) {
-    triggerPopup('✅ All tasks completed! Redirecting...');
-    console.log('Checklist:', checklist.map(i => `${i.id}: ${i.completed}`));
+    notificationMessage = message;
+    showCompletionNotification = true;
     setTimeout(() => {
-      try {
-        goto('/end'); // SvelteKit
-      } catch {
-        window.location.href = '/end'; // fallback for plain Svelte
-      }
-    }, 2500);
+      showCompletionNotification = false;
+    }, 5000);
   }
-}
+
+  async function updateChecklist(itemId: string) {
+    checklist = checklist.map(item =>
+      item.id === itemId ? { ...item, completed: true } : item
+    );
+    localStorage.setItem('checklist', JSON.stringify(checklist));
+    await tick();
+
+    const allDone = checklist.every(item => item.completed);
+    if (allDone) {
+      triggerPopup('✅ All tasks completed! Redirecting...');
+      setTimeout(() => {
+        try {
+          goto('/end');
+        } catch {
+          window.location.href = '/end';
+        }
+      }, 2500);
+    }
+  }
 
   function formatTime(seconds: number): string {
     const mins = Math.floor(seconds / 60);
@@ -91,7 +87,7 @@
   function startTimer() {
     if (interval || $timeLeft <= 0) return;
     isRunning = true;
-    updateChecklist('start_timer'); // Mark as completed
+    updateChecklist('start_timer');
     interval = setInterval(() => {
       timeLeft.update(t => {
         if (t <= 1) {
@@ -114,7 +110,7 @@
       clearInterval(interval);
       interval = null;
       isRunning = false;
-      updateChecklist('stop_timer'); // Mark as completed
+      updateChecklist('stop_timer');
     }
   }
 
@@ -127,7 +123,7 @@
     pauseTimer();
     const total = Math.max(1, totalSeconds);
     timeLeft.set(total);
-    updateChecklist('set_time'); // Mark as completed
+    updateChecklist('set_time');
   }
 
   function resetTimer() {
@@ -155,6 +151,64 @@
 </script>
 
 <main>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="15" r="8" fill="#ABDE9D"/>
+          <path d="M20 23 L20 35 M15 30 L25 30" stroke="#ABDE9D" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item" on:click={goBack}>
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <button class="nav-item">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" fill="white"/>
+          <path d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      
+      <button class="nav-item">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="12" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="bold">AI</text>
+        </svg>
+      </button>
+      
+      <button class="nav-item active">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+          <path d="M3 10H21M8 2V6M16 2V6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <rect x="7" y="14" width="3" height="3" fill="white"/>
+          <rect x="14" y="14" width="3" height="3" fill="white"/>
+        </svg>
+      </button>
+      
+      <button class="nav-item" on:click={goBack}>  <!-- ✓ This was added -->
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9L12 2L21 9V20C21 20.5304..." stroke="white" stroke-width="2"/>
+          <path d="M9 22V12H15V22" stroke="white" stroke-width="2"/>
+        </svg>
+      </button>
+
+      
+      <button class="nav-item">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
+          <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z" fill="#1a4d2e"/>
+          <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+
   <!-- Checklist -->
   <div class="checklist">
     <h3>✓ Test Tasks</h3>
@@ -166,88 +220,83 @@
     {/each}
   </div>
 
-  <!-- Countdown Timer Card -->
-  <div class="timer-card">
-    <h2>⏱️ Countdown Timer</h2>
-    
-    {#if showCompletionNotification}
-      <div class="notification-wrapper">
-        <div class="notification">
-          <div class="notification-content">
-            <span class="notification-icon">🎉</span>
-            <span class="notification-text">{notificationMessage}</span>
-            <button class="close-btn" on:click={closeCompletionNotification}>×</button>
+  <div class="content">
+    <!-- Header -->
+    <div class="header">
+      <h1>Timer</h1>
+      <input type="search" class="search-bar" placeholder="Search..." />
+    </div>
+
+    <!-- Timer Card -->
+    <div class="timer-card">
+      {#if showCompletionNotification}
+        <div class="notification-wrapper">
+          <div class="notification">
+            <div class="notification-content">
+              <span class="notification-text">{notificationMessage}</span>
+              <button class="close-btn" on:click={closeCompletionNotification}>×</button>
+            </div>
           </div>
         </div>
-      </div>
-    {/if}
-    
-    <button class="main-button" on:click={goBack}>
-      Go to Home page
-    </button>
+      {/if}
 
-    <div class="timer-container">
-      <div class="time-display-container">
-        <div class="time-label">Countdown Timer</div>
-        
-        <div 
-          class="time-display" 
-          on:click={toggleTimer} 
-          on:keydown={handleKeydown} 
-          role="button" 
-          tabindex="0"
-        >
-          <h1>{formattedTime}</h1>
+      <div class="timer-content">
+        <div class="timer-left">
+          <div class="time-label">TIMER</div>
+          <div class="flower-image">🌸</div>
+          <div class="timer-info">Work Timer Running</div>
         </div>
 
-        <div class="status-indicator">
-          {#if isRunning}
-            <span class="text-green">Running...</span>
-          {:else if $timeLeft < totalSeconds && $timeLeft > 0}
-            <span class="text-yellow">Paused</span>
-          {:else if $timeLeft === 0}
-            <span class="text-red">Finished</span>
-          {:else}
-            <span class="text-gray">Ready</span>
-          {/if}
-        </div>
-      </div>
-      
-      <div class="controls">
-        <div class="input-row">
-          <div class="input-wrapper">
-            <label for="minutes">Minutes</label>
-            <input 
-              id="minutes"
-              type="number" 
-              bind:value={minutes} 
-              on:keydown={handleInputKeydown}
-              class="time-input"
-              min="0"
-              max="99"
-            />
+        <div class="timer-right">
+          <div class="time-display-large">
+            <div class="time-value">{formatTime(totalSeconds)}</div>
+            <div 
+              class="time-display-main" 
+              on:click={toggleTimer} 
+              on:keydown={handleKeydown} 
+              role="button" 
+              tabindex="0"
+            >
+              {formattedTime}
+            </div>
           </div>
-          <div class="input-wrapper">
-            <label for="seconds">Seconds</label>
-            <input 
-              id="seconds"
-              type="number" 
-              bind:value={seconds} 
-              on:keydown={handleInputKeydown}
-              class="time-input"
-              min="0"
-              max="59"
-            />
-          </div>
-          <button on:click={setCustomTime} class="btn-set">Set</button>
-        </div>
 
-        <button on:click={toggleTimer} class="btn-primary">
-          {isRunning ? 'Pause' : 'Start'}
-        </button>
-        <button on:click={resetTimer} class="btn-reset">
-          Reset
-        </button>
+          <div class="timer-controls">
+            <div class="input-group">
+              <div class="input-field">
+                <label for="minutes">Minutes</label>
+                <input 
+                  id="minutes"
+                  type="number" 
+                  bind:value={minutes} 
+                  on:keydown={handleInputKeydown}
+                  min="0"
+                  max="99"
+                />
+              </div>
+              <div class="input-field">
+                <label for="seconds">Seconds</label>
+                <input 
+                  id="seconds"
+                  type="number" 
+                  bind:value={seconds} 
+                  on:keydown={handleInputKeydown}
+                  min="0"
+                  max="59"
+                />
+              </div>
+            </div>
+
+            <div class="button-group">
+              <button on:click={toggleTimer} class="btn-control btn-start">
+                {isRunning ? 'Pause Timer' : 'Start Timer'}
+              </button>
+              <button on:click={resetTimer} class="btn-control btn-reset">
+                Reset Timer
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -255,243 +304,268 @@
 
 <style>
   main {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  min-height: 100vh;
-  padding: 32px;
-  background: linear-gradient(135deg, #228B22 0%, #2E8B57 50%, #6B8E23 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    background: #ABDE9D;
+  }
+
+  .sidebar {
+    width: 70px;
+    background: #03440C;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+  }
+
+  .sidebar-header {
+    margin-bottom: 40px;
+  }
+
+  .logo svg {
+    display: block;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .nav-icon-svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .nav-item {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+  }
+
+  .nav-item:hover, .nav-item.active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .nav-item svg {
+    flex-shrink: 0;
+  }
+
+  .content {
+    margin-left: 70px;
+    flex: 1;
+    padding: 20px 40px;
+  }
+
+  .header {
+    background: #03440C;
+    padding: 15px 30px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+
+  .header h1 {
+    color: white;
+    font-size: 24px;
+    margin: 0;
+  }
+
+  .search-bar {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: none;
+    width: 300px;
+    font-size: 14px;
   }
 
   .timer-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    background: white;
+    border-radius: 20px;
     padding: 40px;
-    border-radius: 24px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    max-width: 450px;
-    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+
+  .timer-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .timer-left {
     text-align: center;
-    animation: fadeIn 0.4s ease;
-  }
-
-  .timer-card h2 {
-    font-size: 28px;
-    font-weight: 700;
-    margin: 0 0 32px 0;
-    color: #1f2937;
-  }
-
-  /* Timer Styles */
-  .timer-container {
-    text-align: center;
-    padding: 2rem 0;
-    width: 100%;
-  }
-
-  .time-display-container {
-    margin-bottom: 2rem;
   }
 
   .time-label {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #6b7280;
-    margin-bottom: 1rem;
+    font-size: 24px;
+    font-weight: 700;
+    color: #03440C;
+    margin-bottom: 20px;
   }
 
-  .time-display {
-    outline: none;
-    transition: box-shadow 0.2s, background 0.2s;
-    width: 100%; 
-    padding: 1rem 0;
-    cursor: pointer;
-    border-radius: 12px;
+  .flower-image {
+    font-size: 80px;
+    margin: 20px 0;
   }
 
-  .time-display:hover, .time-display:focus {
-    background: rgba(102, 126, 234, 0.05);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  .timer-info {
+    font-size: 14px;
+    color: #666;
+    margin-top: 20px;
   }
 
-  .time-display h1 {
-    font-size: 5rem; 
-    font-weight: 800;
-    color: #1f2937;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    letter-spacing: -2px; 
-    transition: color 0.3s ease;
-  }
-
-  .time-display:hover h1 {
-    color: #667eea;
-  }
-
-  .status-indicator {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-top: 1rem;
-    text-transform: uppercase;
-  }
-
-  .text-green { color: #10b981; }
-  .text-yellow { color: #f59e0b; }
-  .text-gray { color: #9ca3af; }
-  .text-red { color: #ef4444; }
-
-  .controls {
+  .timer-right {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    margin-top: 2rem;
+    gap: 30px;
   }
 
-  .input-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .input-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .input-wrapper label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #374151;
-    margin-bottom: 0.5rem;
-    text-align: left;
-  }
-
-  .time-input {
-    width: 100%;
+  .time-display-large {
     text-align: center;
-    padding: 0.875rem;
-    border: 2px solid #d1d5db;
-    border-radius: 12px;
-    font-size: 1.25rem;
-    outline: none;
-    box-sizing: border-box;
-    color: #111827;
-    font-weight: 700;
-    background: white;
   }
 
-  .time-input:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  .time-value {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 10px;
   }
 
-  .controls button {
-    padding: 16px;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 1rem;
+  .time-display-main {
+    font-size: 64px;
+    font-weight: 800;
+    color: #03440C;
     cursor: pointer;
-    transition: all 0.2s ease;
-    width: 100%;
-  }
-
-  .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-    color: white;
-    font-size: 1.1rem;
-  }
-
-  .btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-  }
-
-  .btn-primary:active {
-    transform: scale(0.95);
-  }
-
-  .btn-set {
-    background: #e5e7eb;
-    color: #374151;
-    font-weight: 600;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 0.875rem 1.25rem;
+    padding: 20px;
     border-radius: 12px;
-    font-size: 0.95rem;
-    width: 100%;
+    transition: all 0.2s;
   }
 
-  .btn-set:hover {
-    background: #d1d5db;
+  .time-display-main:hover {
+    background: rgba(3, 68, 12, 0.05);
+  }
+
+  .timer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .input-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .input-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .input-field label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .input-field input {
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .input-field input:focus {
+    outline: none;
+    border-color: #03440C;
+  }
+
+  .button-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .btn-control {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-start {
+    background: #03440C;
+    color: white;
+  }
+
+  .btn-start:hover {
+    background: #055a0f;
+    transform: translateY(-2px);
   }
 
   .btn-reset {
     background: #e5e7eb;
     color: #374151;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
   .btn-reset:hover {
     background: #d1d5db;
   }
 
-  .main-button {
-    width: 60%;
-    padding: 16px;
-    margin-bottom: 40px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-size: 20px;
-    font-weight: 700;
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .main-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-  }
-
-  .main-button:active {
-    transform: scale(0.95);
-  }
-
-  /* Checklist */
   .checklist {
     position: fixed;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
     background: white;
-    padding: 20px;
-    border-radius: 16px;
+    padding: 18px 20px;
+    border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    min-width: 250px;
+    min-width: 280px;
+    max-width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
     z-index: 1500;
   }
 
   .checklist h3 {
-    margin: 0 0 16px 0;
-    color: #333;
-    font-size: 18px;
+    margin: 0 0 14px 0;
+    color: #03440C;
+    font-size: 16px;
     font-weight: 700;
+    border-bottom: 2px solid #03440C;
+    padding-bottom: 8px;
   }
 
   .checklist-item {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 8px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 6px;
     background: #f9fafb;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
   }
 
   .checklist-item.completed {
@@ -499,16 +573,17 @@
   }
 
   .checkbox-display {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border: 2px solid #d1d5db;
-    border-radius: 6px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 14px;
     flex-shrink: 0;
-    transition: all 0.3s ease;
+    margin-top: 2px;
+    transition: all 0.2s ease;
   }
 
   .checklist-item.completed .checkbox-display {
@@ -519,8 +594,9 @@
 
   .checklist-text {
     color: #374151;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.4;
+    flex: 1;
   }
 
   .checklist-item.completed .checklist-text {
@@ -528,9 +604,8 @@
     font-weight: 500;
   }
 
-  /* NOTIFICATION */
   .notification-wrapper {
-    position: fixed;
+    position: absolute;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
@@ -539,31 +614,27 @@
   }
 
   .notification-content {
-    background: #10b981;
-    color: white;
-    padding: 1rem 1.5rem;
+    background: #FFD700;
+    color: #333;
+    padding: 16px 24px;
     border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    max-width: 350px;
-  }
-
-  .notification-icon {
-    font-size: 1.5rem;
+    gap: 12px;
   }
 
   .notification-text {
     flex: 1;
     font-weight: 600;
+    font-size: 14px;
   }
 
   .close-btn {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.1);
     border: none;
-    color: white;
-    font-size: 1.5rem;
+    color: #333;
+    font-size: 20px;
     cursor: pointer;
     padding: 0;
     width: 24px;
@@ -577,12 +648,7 @@
   }
 
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    background: rgba(0, 0, 0, 0.2);
   }
 
   @keyframes slideInDown {
@@ -590,25 +656,35 @@
     to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
 
-  @media (max-width: 640px) {
-    .timer-card {
-      padding: 32px 24px;
-      max-width: 90%;
+  @media (max-width: 768px) {
+    .timer-content {
+      grid-template-columns: 1fr;
+      gap: 30px;
     }
 
-    .timer-card h2 {
-      font-size: 24px;
+    .content {
+      margin-left: 0;
+      padding: 15px 20px;
     }
 
-    .time-display h1 {
-      font-size: 4rem;
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: fixed;
+      bottom: 0;
+      top: auto;
+      flex-direction: row;
+      padding: 10px 0;
+      justify-content: space-around;
     }
 
-    .checklist {
-      top: 10px;
-      right: 10px;
-      min-width: 220px;
-      padding: 16px;
+    .sidebar-header {
+      display: none;
+    }
+
+    .sidebar-nav {
+      flex-direction: row;
+      gap: 10px;
     }
   }
 </style>
