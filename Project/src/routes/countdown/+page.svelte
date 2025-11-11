@@ -2,25 +2,9 @@
   import { onMount } from 'svelte';
   import { writable } from 'svelte/store';
   import { goto } from '$app/navigation';
-  import { tick } from 'svelte';
   import { base } from '$app/paths';
-
-  interface ChecklistItem {
-    id: string;
-    text: string;
-    completed: boolean;
-  }
-
-  // Checklist
-  let checklist: ChecklistItem[] = [
-    { id: 'add_column', text: 'Add a new column', completed: false },
-    { id: 'add_task', text: 'Add a task to any column', completed: false },
-    { id: 'remove_column', text: 'Remove a column', completed: false },
-    { id: 'remove_task', text: 'Remove a task from any column', completed: false },
-    { id: 'set_time', text: 'Set a time on the countdown', completed: false },
-    { id: 'start_timer', text: 'Start the countdown timer', completed: false },
-    { id: 'stop_timer', text: 'Stop/pause the countdown timer', completed: false }
-  ];
+  import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
+  import { checklistStore } from '$lib/stores/checklist';
 
   // Timer variables
   let minutes: number = 0;
@@ -38,15 +22,16 @@
   }
 
   onMount(() => {
-    const savedChecklist = localStorage.getItem('checklist');
-    if (savedChecklist) {
-      checklist = JSON.parse(savedChecklist);
-    }
     timeLeft.set(totalSeconds);
   });
 
-  function goBack() {
+  // Navigation functions
+  function goToHome() {
     goto(`${base}/`);
+  }
+
+  function goToCalendar() {
+    goto(`${base}/calender`);
   }
 
   function triggerPopup(message: string) {
@@ -55,26 +40,6 @@
     setTimeout(() => {
       showCompletionNotification = false;
     }, 5000);
-  }
-
-  async function updateChecklist(itemId: string) {
-    checklist = checklist.map(item =>
-      item.id === itemId ? { ...item, completed: true } : item
-    );
-    localStorage.setItem('checklist', JSON.stringify(checklist));
-    await tick();
-
-    const allDone = checklist.every(item => item.completed);
-    if (allDone) {
-      triggerPopup('✅ All tasks completed! Redirecting...');
-      setTimeout(() => {
-        try {
-          goto('/end');
-        } catch {
-          window.location.href = '/end';
-        }
-      }, 2500);
-    }
   }
 
   function formatTime(seconds: number): string {
@@ -87,7 +52,7 @@
   function startTimer() {
     if (interval || $timeLeft <= 0) return;
     isRunning = true;
-    updateChecklist('start_timer');
+    checklistStore.complete('start_timer'); // CHANGED: Use store
     interval = setInterval(() => {
       timeLeft.update(t => {
         if (t <= 1) {
@@ -110,7 +75,7 @@
       clearInterval(interval);
       interval = null;
       isRunning = false;
-      updateChecklist('stop_timer');
+      checklistStore.complete('stop_timer'); // CHANGED: Use store
     }
   }
 
@@ -123,7 +88,7 @@
     pauseTimer();
     const total = Math.max(1, totalSeconds);
     timeLeft.set(total);
-    updateChecklist('set_time');
+    checklistStore.complete('set_timer'); // CHANGED: Use store
   }
 
   function resetTimer() {
@@ -156,18 +121,20 @@
     <div class="sidebar-header">
       <div class="logo">
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-          <circle cx="20" cy="15" r="8" fill="#ABDE9D"/>
-          <path d="M20 23 L20 35 M15 30 L25 30" stroke="#ABDE9D" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="20" cy="15" r="8" fill="#90EE90"/>
+          <path d="M20 23 L20 35 M15 30 L25 30" stroke="#90EE90" stroke-width="3" stroke-linecap="round"/>
         </svg>
       </div>
     </div>
     <nav class="sidebar-nav">
-      <button class="nav-item" on:click={goBack}>
+      <!-- Back/Arrow Icon -->
+      <button class="nav-item" on:click={goToHome}>
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
       
+      <!-- User/Profile Icon -->
       <button class="nav-item">
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="8" r="4" fill="white"/>
@@ -175,6 +142,7 @@
         </svg>
       </button>
       
+      <!-- AI Chat Icon -->
       <button class="nav-item">
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
           <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -182,7 +150,8 @@
         </svg>
       </button>
       
-      <button class="nav-item active">
+      <!-- Calendar Icon -->
+      <button class="nav-item" on:click={goToCalendar}>
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
           <path d="M3 10H21M8 2V6M16 2V6" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -190,15 +159,27 @@
           <rect x="14" y="14" width="3" height="3" fill="white"/>
         </svg>
       </button>
-      
-      <button class="nav-item" on:click={goBack}>  <!-- ✓ This was added -->
+
+      <!-- Timer/Countdown Icon - ACTIVE -->
+      <button class="nav-item active">
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M3 9L12 2L21 9V20C21 20.5304..." stroke="white" stroke-width="2"/>
-          <path d="M9 22V12H15V22" stroke="white" stroke-width="2"/>
+          <circle cx="12" cy="13" r="9" stroke="white" stroke-width="2"/>
+          <path d="M12 13L12 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-
       
+      <!-- Home/Dashboard Icon -->
+      <button class="nav-item" on:click={goToHome}>
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      
+      <!-- Tree/Growth Icon -->
       <button class="nav-item">
         <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
           <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
@@ -209,16 +190,7 @@
     </nav>
   </div>
 
-  <!-- Checklist -->
-  <div class="checklist">
-    <h3>✓ Test Tasks</h3>
-    {#each checklist as item (item.id)}
-      <div class="checklist-item" class:completed={item.completed}>
-        <span class="checkbox-display">{item.completed ? '✓' : ''}</span>
-        <span class="checklist-text">{item.text}</span>
-      </div>
-    {/each}
-  </div>
+  <!-- REMOVED: Old checklist div -->
 
   <div class="content">
     <!-- Header -->
@@ -300,6 +272,9 @@
       </div>
     </div>
   </div>
+
+  <!-- ADDED: Unified checklist component -->
+  <UnifiedChecklist />
 </main>
 
 <style>
@@ -533,76 +508,7 @@
     background: #d1d5db;
   }
 
-  .checklist {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: white;
-    padding: 18px 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    min-width: 280px;
-    max-width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1500;
-  }
-
-  .checklist h3 {
-    margin: 0 0 14px 0;
-    color: #03440C;
-    font-size: 16px;
-    font-weight: 700;
-    border-bottom: 2px solid #03440C;
-    padding-bottom: 8px;
-  }
-
-  .checklist-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-    background: #f9fafb;
-    transition: all 0.2s ease;
-  }
-
-  .checklist-item.completed {
-    background: #d1fae5;
-  }
-
-  .checkbox-display {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
-    margin-top: 2px;
-    transition: all 0.2s ease;
-  }
-
-  .checklist-item.completed .checkbox-display {
-    background: #10b981;
-    border-color: #10b981;
-    color: white;
-  }
-
-  .checklist-text {
-    color: #374151;
-    font-size: 13px;
-    line-height: 1.4;
-    flex: 1;
-  }
-
-  .checklist-item.completed .checklist-text {
-    color: #059669;
-    font-weight: 500;
-  }
+  /* REMOVED: All .checklist styles - now in UnifiedChecklist component */
 
   .notification-wrapper {
     position: absolute;

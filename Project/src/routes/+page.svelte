@@ -3,6 +3,8 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { tick } from 'svelte';
+  import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
+  import { checklistStore } from '$lib/stores/checklist';
 
   interface SubTask { id: number; title: string; status: string; }
   interface TaskData { 
@@ -15,7 +17,6 @@
     notes: string;
     subTasks: SubTask[];
   }
-  interface ChecklistItem { id: string; text: string; completed: boolean; }
 
   let tasks: TaskData[] = [
     { 
@@ -77,36 +78,39 @@
   let showWelcomePopup = true;
   let agreedToTest = false;
 
-  // Checklist state
-  let checklist: ChecklistItem[] = [
-    { id: 'add_task', text: 'Add a new task', completed: false },
-    { id: 'view_task', text: 'View task details', completed: false },
-    { id: 'add_subtask', text: 'Add a subtask', completed: false },
-    { id: 'edit_task', text: 'Edit a task', completed: false },
-    { id: 'set_date', text: 'Set start and due dates', completed: false },
-    { id: 'change_status', text: 'Change task status', completed: false }
-  ];
-
   let showPopup = false;
   let popupMessage = '';
   let popupTimeout: NodeJS.Timeout;
 
   onMount(() => {
     const savedAgreement = localStorage.getItem('agreedToTest');
-    const savedChecklist = localStorage.getItem('checklist');
+    const savedTasks = localStorage.getItem('tasks');
+    const savedNextTaskId = localStorage.getItem('nextTaskId');
+    const savedNextSubTaskId = localStorage.getItem('nextSubTaskId');
     
     if (savedAgreement === 'true') {
       showWelcomePopup = false;
       agreedToTest = true;
     }
-    
-    if (savedChecklist) {
-      checklist = JSON.parse(savedChecklist);
+
+    if (savedTasks) {
+      tasks = JSON.parse(savedTasks);
+    }
+
+    if (savedNextTaskId) {
+      nextTaskId = JSON.parse(savedNextTaskId);
+    }
+
+    if (savedNextSubTaskId) {
+      nextSubTaskId = JSON.parse(savedNextSubTaskId);
     }
   });
 
   function goToCountdown() {
     goto(`${base}/countdown`);
+  }
+  function goToCalendar() {
+    goto(`${base}/calender`);
   }
 
   function handleAgree() {
@@ -116,36 +120,11 @@
     }
   }
 
-  async function updateChecklist(itemId: string) {
-    checklist = checklist.map(item =>
-      item.id === itemId ? { ...item, completed: true } : item
-    );
-    localStorage.setItem('checklist', JSON.stringify(checklist));
-    await tick();
-
-    const allDone = checklist.every(item => item.completed);
-    if (allDone) {
-      triggerPopup('✅ All tasks completed! Redirecting...');
-      setTimeout(() => {
-        try {
-          goto(`${base}/end`);
-        } catch {
-          window.location.href = `${base}/end`;
-        }
-      }, 2500);
-    }
-  }
-
   function triggerPopup(message: string) {
     popupMessage = message;
     showPopup = true;
     clearTimeout(popupTimeout);
     popupTimeout = setTimeout(() => (showPopup = false), 3000);
-  }
-
-  function clearChecklist() {
-    checklist = checklist.map(item => ({ ...item, completed: false }));
-    localStorage.removeItem('checklist');
   }
 
   function openTaskModal(task?: TaskData) {
@@ -158,7 +137,7 @@
       newTaskDueDate = task.dueDate;
       newTaskStatus = task.status;
       newTaskNotes = task.notes;
-      updateChecklist('view_task');
+      checklistStore.complete('view_task'); // CHANGED: Use store
     } else {
       selectedTask = null;
       isEditingTask = false;
@@ -186,10 +165,9 @@
               dueDate: newTaskDueDate, status: newTaskStatus, notes: newTaskNotes }
           : t
       );
+      localStorage.setItem('tasks', JSON.stringify(tasks));
       triggerPopup('✏️ Task updated!');
-      updateChecklist('edit_task');
-      if (newTaskStartDate || newTaskDueDate) updateChecklist('set_date');
-      if (newTaskStatus !== 'Not Started') updateChecklist('change_status');
+      // Note: 'edit_task' isn't in the new unified checklist, removed
     } else {
       const newTask: TaskData = {
         id: nextTaskId++,
@@ -202,8 +180,10 @@
         subTasks: []
       };
       tasks = [...tasks, newTask];
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      localStorage.setItem('nextTaskId', JSON.stringify(nextTaskId));
       triggerPopup('✨ Task created!');
-      updateChecklist('add_task');
+      checklistStore.complete('add_task'); // CHANGED: Use store
     }
     
     showTaskModal = false;
@@ -213,6 +193,7 @@
   function deleteTask() {
     if (!selectedTask) return;
     tasks = tasks.filter(t => t.id !== selectedTask!.id);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
     showTaskModal = false;
     triggerPopup('🗑️ Task deleted!');
   }
@@ -239,8 +220,10 @@
         : t
     );
 
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    localStorage.setItem('nextSubTaskId', JSON.stringify(nextSubTaskId));
     triggerPopup('📋 Subtask added!');
-    updateChecklist('add_subtask');
+    checklistStore.complete('add_subtask'); // CHANGED: Use store
     showSubTaskModal = false;
   }
 
@@ -250,6 +233,7 @@
         ? { ...t, subTasks: t.subTasks.filter(st => st.id !== subTaskId) }
         : t
     );
+    localStorage.setItem('tasks', JSON.stringify(tasks));
     triggerPopup('🗑️ Subtask deleted!');
   }
 
@@ -283,81 +267,73 @@
   {/if}
 
   {#if !showWelcomePopup}
-<div class="sidebar">
-  <div class="sidebar-header">
-    <div class="logo">
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="15" r="8" fill="#90EE90"/>
-        <path d="M20 23 L20 35 M15 30 L25 30" stroke="#90EE90" stroke-width="3" stroke-linecap="round"/>
-      </svg>
-    </div>
-  </div>
-  <nav class="sidebar-nav">
-    <!-- Back/Arrow Icon -->
-    <button class="nav-item">
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    
-    <!-- User/Profile Icon -->
-    <button class="nav-item">
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="8" r="4" fill="white"/>
-        <path d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" stroke="white" stroke-width="2" stroke-linecap="round"/>
-      </svg>
-    </button>
-    
-    <!-- AI Chat Icon -->
-    <button class="nav-item">
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <text x="12" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="bold">AI</text>
-      </svg>
-    </button>
-    
-    <!-- Calendar Icon -->
-    <button class="nav-item active" on:click={goToCountdown}>
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
-        <path d="M3 10H21M8 2V6M16 2V6" stroke="white" stroke-width="2" stroke-linecap="round"/>
-        <rect x="7" y="14" width="3" height="3" fill="white"/>
-        <rect x="14" y="14" width="3" height="3" fill="white"/>
-      </svg>
-    </button>
-    
-    <!-- Home/Dashboard Icon -->
-    <button class="nav-item">
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    
-    <!-- Tree/Growth Icon -->
-    <button class="nav-item">
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
-        <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z" fill="#1a4d2e"/>
-        <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
-      </svg>
-    </button>
-  </nav>
-</div>
-
-
-    <div class="checklist">
-      <h3>✓ Test Tasks</h3>
-      {#each checklist as item (item.id)}
-        <div class="checklist-item" class:completed={item.completed}>
-          <span class="checkbox">{item.completed ? '✓' : ''}</span>
-          <span class="checklist-text">{item.text}</span>
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="15" r="8" fill="#90EE90"/>
+            <path d="M20 23 L20 35 M15 30 L25 30" stroke="#90EE90" stroke-width="3" stroke-linecap="round"/>
+          </svg>
         </div>
-      {/each}
-      <button class="clear-checklist-button" on:click={clearChecklist}>
-        Clear Checklist
-      </button>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-item">
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        
+        <button class="nav-item">
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="8" r="4" fill="white"/>
+            <path d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        
+        <button class="nav-item">
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="12" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="bold">AI</text>
+          </svg>
+        </button>
+        
+        <button class="nav-item" on:click={goToCalendar}>
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+            <path d="M3 10H21M8 2V6M16 2V6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <rect x="7" y="14" width="3" height="3" fill="white"/>
+            <rect x="14" y="14" width="3" height="3" fill="white"/>
+          </svg>
+        </button>
+
+        <button class="nav-item" on:click={goToCountdown}>
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="13" r="9" stroke="white" stroke-width="2"/>
+            <path d="M12 13L12 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        
+        <button class="nav-item">
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        
+        <button class="nav-item">
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
+            <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z" fill="#1a4d2e"/>
+            <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
+          </svg>
+        </button>
+      </nav>
     </div>
+
+    <!-- REMOVED: Old checklist div - replaced with component below -->
   {/if}
 
   <div class="content">
@@ -510,6 +486,9 @@
   {#if showPopup}
     <div class="popup">{popupMessage}</div>
   {/if}
+
+  <!-- ADDED: New unified checklist component -->
+  <UnifiedChecklist />
 </main>
 
 <style>
@@ -736,45 +715,6 @@
     background: rgba(0,0,0,0.15);
   }
 
-  .checklist {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: white;
-    padding: 18px 20px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    min-width: 280px;
-    max-width: 320px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1500;
-  }
-
-  .checklist h3 {
-    margin: 0 0 14px 0;
-    color: #03440C;
-    font-size: 16px;
-    font-weight: 700;
-    border-bottom: 2px solid #03440C;
-    padding-bottom: 8px;
-  }
-
-  .checklist-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 8px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-    background: #f9fafb;
-    transition: all 0.2s ease;
-  }
-
-  .checklist-item.completed {
-    background: #d1fae5;
-  }
-
   .checkbox {
     width: 20px;
     height: 20px;
@@ -787,43 +727,6 @@
     flex-shrink: 0;
     margin-top: 2px;
     transition: all 0.2s ease;
-  }
-
-  .checklist-item.completed .checkbox {
-    background: #10b981;
-    border-color: #10b981;
-    color: white;
-  }
-
-  .checklist-text {
-    color: #374151;
-    font-size: 13px;
-    line-height: 1.4;
-    flex: 1;
-  }
-
-  .checklist-item.completed .checklist-text {
-    color: #059669;
-    font-weight: 500;
-  }
-
-  .clear-checklist-button {
-    width: 100%;
-    margin-top: 10px;
-    padding: 8px 14px;
-    background: #ef4444;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .clear-checklist-button:hover {
-    background: #dc2626;
-    transform: translateY(-1px);
   }
 
   .modal-overlay {
@@ -1160,12 +1063,6 @@
 
     .search-bar {
       width: 200px;
-    }
-
-    .checklist {
-      bottom: 80px;
-      right: 10px;
-      max-width: 260px;
     }
 
     .modal {
