@@ -1,19 +1,20 @@
+// svelte.config.js
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
-
-const dev = process.argv.includes('dev');
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      fallback: 'index.html',
+      // keep if your deployment requires SPA fallback
+      fallback: 'index.html'
     }),
     paths: {
-      base: '/Team_2_2025',
-    },
-  },
+      // EXACT subpath folder name provided 
+      base: '/Team_2'
+    }
+  }
 };
 
 export default config;
