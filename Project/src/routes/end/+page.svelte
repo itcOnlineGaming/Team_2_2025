@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-
+  import { checklistStore } from '$lib/stores/checklist';
   onMount(() => {
-    // Optional: clear saved data when reaching the end
+    checklistStore.reset();     
     localStorage.removeItem('checklist');
     localStorage.removeItem('agreedToTest');
   });
