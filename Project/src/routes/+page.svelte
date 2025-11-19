@@ -113,6 +113,8 @@
     goto(`${base}/calender`);
   }
 
+  function goToForest() { goto(`${base}/forest`); }
+
   function handleAgree() {
     if (agreedToTest) {
       localStorage.setItem('agreedToTest', 'true');
@@ -289,7 +291,7 @@
             <path d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" stroke="white" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </button>
-        
+
         <button class="nav-item">
           <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -313,6 +315,13 @@
             <path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round"/>
             <path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
             <path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <button class="nav-item" on:click={goToForest}>
+          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="9" r="6" fill="#4CAF50"/>
+            <rect x="10.5" y="13" width="3" height="7" fill="#1a4d2e" rx="1" />
           </svg>
         </button>
         
