@@ -20,6 +20,10 @@
     </div>
 
     <nav class="sidebar-nav">
+        <button class="nav-item active" on:click={goToForest}>
+            <img src="{base}/Images/tree.png" alt="Forest" style="width: 32px; height: 32px; object-fit: contain;" />
+        </button>
+
         <button class="nav-item" on:click={goToHome}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <path d="M19 12H5M5 12L12 19M5 12L12 5"
@@ -60,15 +64,6 @@
                 <circle cx="12" cy="13" r="9" stroke="white" stroke-width="2"/>
                 <path d="M12 13L12 8" stroke="white" stroke-width="2"/>
                 <path d="M12 13L15 15" stroke="white" stroke-width="2"/>
-            </svg>
-        </button>
-
-        <button class="nav-item active" on:click={goToForest}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
-                <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z"
-                      fill="#1a4d2e"/>
-                <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
             </svg>
         </button>
     </nav>

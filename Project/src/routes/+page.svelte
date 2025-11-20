@@ -170,7 +170,7 @@ if (isEditingTask && selectedTask) {
   );
   localStorage.setItem('tasks', JSON.stringify(tasks));
   triggerPopup('✏️ Task updated!');
-  
+
   // Check if task was marked as completed
   if (newTaskStatus === 'Completed' && selectedTask!.status !== 'Completed') {
     availableTreesStore.increment();
@@ -289,6 +289,10 @@ if (isEditingTask && selectedTask) {
         </div>
       </div>
       <nav class="sidebar-nav">
+        <button class="nav-item" on:click={goToForest}>
+          <img src="{base}/Images/tree.png" alt="Forest" style="width: 32px; height: 32px; object-fit: contain;" />
+        </button>
+
         <button class="nav-item">
           <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -308,7 +312,7 @@ if (isEditingTask && selectedTask) {
             <text x="12" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="bold">AI</text>
           </svg>
         </button>
-        
+
         <button class="nav-item" on:click={goToCalendar}>
           <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
             <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
@@ -325,13 +329,6 @@ if (isEditingTask && selectedTask) {
             <path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round"/>
             <path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
             <path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
-
-        <button class="nav-item" on:click={goToForest}>
-          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="9" r="6" fill="#4CAF50"/>
-            <rect x="10.5" y="13" width="3" height="7" fill="#1a4d2e" rx="1" />
           </svg>
         </button>
         
