@@ -5,6 +5,7 @@
   import { tick } from 'svelte';
   import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
   import { checklistStore } from '$lib/stores/checklist';
+  import { availableTreesStore } from '$lib/stores/taskStore';
 
   interface SubTask { id: number; title: string; status: string; }
   interface TaskData { 
@@ -160,15 +161,24 @@
   function saveTask() {
     if (!newTaskTitle.trim()) return;
 
-    if (isEditingTask && selectedTask) {
-      tasks = tasks.map(t => 
-        t.id === selectedTask!.id 
-          ? { ...t, title: newTaskTitle, color: newTaskColor, startDate: newTaskStartDate, 
-              dueDate: newTaskDueDate, status: newTaskStatus, notes: newTaskNotes }
-          : t
-      );
-      localStorage.setItem('tasks', JSON.stringify(tasks));
-      triggerPopup('✏️ Task updated!');
+if (isEditingTask && selectedTask) {
+  tasks = tasks.map(t => 
+    t.id === selectedTask!.id 
+      ? { ...t, title: newTaskTitle, color: newTaskColor, startDate: newTaskStartDate, 
+          dueDate: newTaskDueDate, status: newTaskStatus, notes: newTaskNotes }
+      : t
+  );
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+  triggerPopup('✏️ Task updated!');
+  
+  // Check if task was marked as completed
+  if (newTaskStatus === 'Completed' && selectedTask!.status !== 'Completed') {
+    availableTreesStore.increment();
+    triggerPopup('🎉 Task completed! You earned a tree! 🌳');
+    // Remove the completed task
+    tasks = tasks.filter(t => t.id !== selectedTask!.id);
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
       // Note: 'edit_task' isn't in the new unified checklist, removed
     } else {
       const newTask: TaskData = {

@@ -1,5 +1,6 @@
 <script>
     import { onMount } from "svelte";
+    import { base } from '$app/paths';
     import { availableTreesStore } from '$lib/stores/taskStore';
 
     let completedTasks = 0;
@@ -9,6 +10,10 @@
     let hasTree = false;
     let forest = [];
     let nextId = 1;
+
+    // Growth phase durations (in milliseconds)
+    const SPROUT_DURATION = 2 * 60 * 1000; // 2 minutes for testing (change to days later)
+    const SAPLING_DURATION = 5 * 60 * 1000; // 5 minutes for testing
 
     // Subscribe to the store
     availableTreesStore.subscribe(value => {
@@ -21,13 +26,44 @@
             return;
         }
         
-        forest = [...forest, { id: nextId++, size: randomSize() }];
+        forest = [...forest, { 
+            id: nextId++, 
+            size: randomSize(),
+            plantedAt: Date.now() // Store timestamp when planted
+        }];
         availableTreesStore.decrement();
         saveForest();
     }
 
     function randomSize() {
         return 60 + Math.floor(Math.random() * 80);
+    }
+
+    // Calculate growth phase based on time elapsed
+    function getGrowthPhase(plantedAt) {
+        const elapsed = Date.now() - plantedAt;
+        
+        if (elapsed < SPROUT_DURATION) {
+            return 'sprout';
+        } else if (elapsed < SPROUT_DURATION + SAPLING_DURATION) {
+            return 'sapling';
+        } else {
+            return 'tree';
+        }
+    }
+
+    // Get growth progress percentage within current phase
+    function getGrowthProgress(plantedAt) {
+        const elapsed = Date.now() - plantedAt;
+        
+        if (elapsed < SPROUT_DURATION) {
+            return (elapsed / SPROUT_DURATION) * 100;
+        } else if (elapsed < SPROUT_DURATION + SAPLING_DURATION) {
+            const saplingElapsed = elapsed - SPROUT_DURATION;
+            return (saplingElapsed / SAPLING_DURATION) * 100;
+        } else {
+            return 100;
+        }
     }
 
     function saveForest() {
@@ -37,7 +73,14 @@
 
     function loadForest() {
         const saved = localStorage.getItem("forest_list");
-        if (saved) forest = JSON.parse(saved);
+        if (saved) {
+            forest = JSON.parse(saved);
+            // If old trees don't have plantedAt, add it as current time
+            forest = forest.map(tree => ({
+                ...tree,
+                plantedAt: tree.plantedAt || Date.now()
+            }));
+        }
         
         const savedId = localStorage.getItem("nextId");
         if (savedId) nextId = JSON.parse(savedId);
@@ -53,6 +96,13 @@
             streak = saved.streak;
             hasTree = saved.completedTasks > 0;
         }
+
+        // Update tree growth every second
+        const interval = setInterval(() => {
+            forest = [...forest]; // Trigger reactivity
+        }, 1000);
+
+        return () => clearInterval(interval);
     });
 
     function save() {
@@ -77,11 +127,41 @@
             localStorage.setItem("lastCompletionDay", today);
         }
 
+        // Add a tree that can be planted
+        availableTreesStore.increment();
+
         save();
     }
 
     function treeSize() {
         return Math.min(200, 50 + completedTasks * 10);
+    }
+
+    // Helper to format time remaining
+    function getTimeUntilNextPhase(plantedAt) {
+        const elapsed = Date.now() - plantedAt;
+        const phase = getGrowthPhase(plantedAt);
+        
+        if (phase === 'sprout') {
+            const remaining = SPROUT_DURATION - elapsed;
+            return formatTime(remaining);
+        } else if (phase === 'sapling') {
+            const remaining = (SPROUT_DURATION + SAPLING_DURATION) - elapsed;
+            return formatTime(remaining);
+        }
+        return 'Fully grown!';
+    }
+
+    function formatTime(ms) {
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) return `${days}d ${hours % 24}h`;
+        if (hours > 0) return `${hours}h ${minutes % 60}m`;
+        if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+        return `${seconds}s`;
     }
 </script>
 
@@ -111,10 +191,28 @@
     {:else}
         <div class="forest-grid">
             {#each forest as t}
-                <svg width={t.size} height={t.size} viewBox="0 0 100 100">
-                    <circle cx="50" cy="40" r="30" fill="green" />
-                    <rect x="45" y="40" width="10" height="50" fill="brown" />
-                </svg>
+                <div class="tree-wrapper">
+                    <div class="tree-visual">
+                        {#if getGrowthPhase(t.plantedAt) === 'sprout'}
+                            <img src="{base}/Images/sprout.png" alt="Sprout" width={t.size * 0.8} />
+                            <div class="growth-label"></div>
+                        {:else if getGrowthPhase(t.plantedAt) === 'sapling'}
+                            <img src="{base}/Images/sapling.png" alt="Sapling" width={t.size * 1.2} />
+                            <div class="growth-label"></div>
+                        {:else}
+                            <img src="{base}/Images/tree.png" alt="Tree" width={t.size * 1.5} />
+                            <div class="growth-label"></div>
+                        {/if}
+                    </div>
+                    
+                    <!-- Growth progress bar -->
+                    {#if getGrowthPhase(t.plantedAt) !== 'tree'}
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: {getGrowthProgress(t.plantedAt)}%"></div>
+                        </div>
+                        <div class="time-remaining">{getTimeUntilNextPhase(t.plantedAt)}</div>
+                    {/if}
+                </div>
             {/each}
         </div>
     {/if}
@@ -124,11 +222,6 @@
             <p><strong>Completed Tasks:</strong> {completedTasks}</p>
             <p><strong>Streak:</strong> {streak} days</p>
         </div>
-
-        <svg class="tree" width="{treeSize()}" height="{treeSize()}" viewBox="0 0 100 100">
-            <circle cx="50" cy="40" r="30" fill="green" />
-            <rect x="45" y="40" width="10" height="50" fill="brown" />
-        </svg>
     {/if}
 </div>
 
@@ -197,17 +290,53 @@
         font-size: 16px;
     }
 
-    .tree {
-        margin: 20px 0;
-    }
-
     .forest-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 30px;
         margin-top: 30px;
         padding: 20px;
         background: #f0f0f0;
         border-radius: 10px;
+    }
+
+    .tree-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tree-visual {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .growth-label {
+        font-size: 12px;
+        color: #666;
+        font-weight: 600;
+        margin-top: 5px;
+    }
+
+    .progress-container {
+        width: 100px;
+        height: 8px;
+        background: #ddd;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #90EE90, #4CAF50);
+        transition: width 0.3s ease;
+    }
+
+    .time-remaining {
+        font-size: 11px;
+        color: #888;
+        font-weight: 500;
     }
 </style>
