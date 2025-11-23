@@ -1,9 +1,10 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
   import { base } from '$app/paths';
   import { checklistStore } from '$lib/stores/checklist';
   import { availableTreesStore } from '$lib/stores/taskStore';
   import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
+  import TutorialPopup from '$lib/components/TutorialPopup.svelte';
 
   let completedTasks = 0;
   let streak = 0;
@@ -27,7 +28,6 @@
       alert("Complete more tasks to plant trees! 🌱");
       return;
     }
-    
     forest = [
       ...forest,
       { 
@@ -94,7 +94,7 @@
     if (savedId) nextId = JSON.parse(savedId);
   }
 
-  onMount(() => {
+  onMount(async () => {
     loadForest();
     availableTreesStore.load();
     
@@ -110,6 +110,8 @@
     const interval = setInterval(() => {
       forest = [...forest]; // Trigger reactivity
     }, 1000);
+    await tick();
+    if (tutorialComponent) tutorialComponent.start();
 
     return () => clearInterval(interval);
   });
@@ -172,6 +174,19 @@
     if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
     return `${seconds}s`;
   }
+  let tutorialComponent;
+  const tutorialSteps = [
+    {
+      title: "Welcome to Your Forest!",
+      message: "Every completed task lets you plant a tree. Watch your forest grow as you work!",
+      position: "center"
+    },
+    {
+      title: "Plant a Tree",
+      message: "Click '🌱 Plant a Tree' when you have trees to add. That's it!",
+      position: "center"
+    }
+  ];
 </script>
 
 <div class="forest-container">
@@ -234,6 +249,12 @@
 </div>
 
 <UnifiedChecklist />
+<TutorialPopup
+  bind:this={tutorialComponent}
+  tutorialKey="forest"
+  steps={tutorialSteps}
+  autoStart={false}
+/>
 
 <style>
   .forest-container {

@@ -4,17 +4,45 @@
   import { onMount } from 'svelte';
   import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
   import { checklistStore } from '$lib/stores/checklist';
+  import TutorialPopup from '$lib/components/TutorialPopup.svelte';
 
   // Sidebar navigation actions
   function goToHome() { goto(`${base}/`); }
   function goToCountdown() { goto(`${base}/countdown`); }
   function goToCalendar() { goto(`${base}/calender`); }
-  function goToForest() {
-    goto(`${base}/forest`);
-   }
+  function goToForest() { goto(`${base}/forest`); }
 
+  // Tutorial reference + steps
+  let tutorialComponent: any;
 
-  // Calendar types/state
+  const tutorialSteps = [
+    {
+      title: "Welcome to the Calendar",
+      message: "This calendar helps you see your tasks and events over the month at a glance.",
+      position: "center"
+    },
+    {
+      title: "Navigate Dates",
+      message: "Use the arrows and Today button to move between months and quickly return to the current month.",
+      position: "top"
+    },
+    {
+      title: "Add Events",
+      message: "Click the + button on a day to add a new event with a title, category, and color.",
+      position: "center"
+    },
+    {
+      title: "Switch Views",
+      message: "Use the Monthly / Weekly toggle to change how your schedule is displayed.",
+      position: "center"
+    },
+    {
+      title: "View Analytics",
+      message: "Choose Pie Chart or Bar Graph to see how your time is spread across categories.",
+      position: "center"
+    }
+  ];
+
   type CalEvent = {
     id: number;
     title: string;
@@ -67,6 +95,11 @@
     } else {
       events = seedDefaults();
       persist();
+    }
+
+    // Start calendar tutorial every time this page loads
+    if (tutorialComponent) {
+      tutorialComponent.start();
     }
   });
 
@@ -217,6 +250,18 @@
     return `M ${cx} ${cy} L ${s.x} ${s.y} A ${r} ${r} 0 ${large} 0 ${e.x} ${e.y} Z`;
   }
 </script>
+
+<!-- your existing HTML + styles exactly as you have them -->
+
+<UnifiedChecklist />
+
+<!-- Tutorial component at the very end -->
+<TutorialPopup
+  bind:this={tutorialComponent}
+  tutorialKey="calendar"
+  steps={tutorialSteps}
+  autoStart={false}
+/>
 
 <!-- Sidebar -->
 <div class="sidebar">

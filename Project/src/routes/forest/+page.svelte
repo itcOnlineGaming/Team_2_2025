@@ -3,11 +3,15 @@
     import { base } from "$app/paths";
     import { checklistStore } from '$lib/stores/checklist';
     import Forest from "$lib/components/Forest.svelte";
+    import TutorialPopup from '$lib/components/TutorialPopup.svelte';
 
     function goToHome() { goto(`${base}/`); }
     function goToCountdown() { goto(`${base}/countdown`); }
     function goToCalendar() { goto(`${base}/calender`); }
     function goToForest() { goto(`${base}/forest`); }
+
+    
+
 </script>
 
 <div class="sidebar">

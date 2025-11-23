@@ -1,12 +1,45 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  // =================== ORIGNALS ===================
+  import { onMount, tick } from 'svelte';
   import { writable } from 'svelte/store';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
   import { checklistStore } from '$lib/stores/checklist';
 
-  // Timer variables
+  // =================== TUTORIAL ADDITIONS ===================
+  import TutorialPopup from '$lib/components/TutorialPopup.svelte';
+  let tutorialComponent: any;
+  const tutorialSteps = [
+    {
+      title: "Welcome to the Timer!",
+      message: "Use this timer to focus your work and take regular breaks.",
+      position: "center"
+    },
+    {
+      title: "Set Time",
+      message: "Type your desired minutes and seconds, then click 'Reset Timer' to update.",
+      position: "center"
+    },
+    {
+      title: "Start & Pause",
+      message: "Click 'Start Timer' to begin! You can pause anytime with the same button.",
+      position: "center"
+    },
+    {
+      title: "Reset When Needed",
+      message: "Click 'Reset Timer' to clear and restart. Great for Pomodoro or short sprints!",
+      position: "center"
+    }
+  ];
+
+  onMount(async () => {
+    timeLeft.set(totalSeconds);
+    await tick();
+    if (tutorialComponent) tutorialComponent.start();
+  });
+
+  // =================== YOUR EXISTING TIMER CODE ===================
   let minutes: number = 0;
   let seconds: number = 25;
   const timeLeft = writable(25);
@@ -21,22 +54,10 @@
     seconds = seconds % 60;
   }
 
-  onMount(() => {
-    timeLeft.set(totalSeconds);
-  });
-
   // Navigation functions
-  function goToHome() {
-    goto(`${base}/`);
-  }
-
-  function goToCalendar() {
-    goto(`${base}/calender`);
-  }
-
-  function goToForest() { 
-    goto(`${base}/forest`);
-  }
+  function goToHome() { goto(`${base}/`); }
+  function goToCalendar() { goto(`${base}/calender`); }
+  function goToForest() { goto(`${base}/forest`); }
 
   function triggerPopup(message: string) {
     notificationMessage = message;
@@ -56,7 +77,7 @@
   function startTimer() {
     if (interval || $timeLeft <= 0) return;
     isRunning = true;
-    checklistStore.complete('start_timer'); // CHANGED: Use store
+    checklistStore.complete('start_timer');
     interval = setInterval(() => {
       timeLeft.update(t => {
         if (t <= 1) {
@@ -79,7 +100,7 @@
       clearInterval(interval);
       interval = null;
       isRunning = false;
-      checklistStore.complete('stop_timer'); // CHANGED: Use store
+      checklistStore.complete('stop_timer');
     }
   }
 
@@ -92,7 +113,7 @@
     pauseTimer();
     const total = Math.max(1, totalSeconds);
     timeLeft.set(total);
-    checklistStore.complete('set_timer'); // CHANGED: Use store
+    checklistStore.complete('set_timer');
   }
 
   function resetTimer() {
@@ -271,6 +292,13 @@
 
   <!-- ADDED: Unified checklist component -->
   <UnifiedChecklist />
+
+  <TutorialPopup
+    bind:this={tutorialComponent}
+    tutorialKey="timer"
+    steps={tutorialSteps}
+    autoStart={false}
+  />
 </main>
 
 <style>
