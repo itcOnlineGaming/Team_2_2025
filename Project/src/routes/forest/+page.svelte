@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
     import { base } from "$app/paths";
+    import { checklistStore } from '$lib/stores/checklist';
     import Forest from "$lib/components/Forest.svelte";
 
     function goToHome() { goto(`${base}/`); }

@@ -5,7 +5,7 @@ export interface ChecklistItem {
   id: string;
   text: string;
   completed: boolean;
-  page: 'tasks' | 'countdown' | 'calendar';
+  page: 'tasks' | 'countdown' | 'calendar' | 'forest'; // added 'forest'
 }
 
 const defaultChecklist: ChecklistItem[] = [
@@ -22,7 +22,10 @@ const defaultChecklist: ChecklistItem[] = [
   // Calendar items
   { id: 'add_event', text: 'Add a new event', completed: false, page: 'calendar' },
   { id: 'view_monthly', text: 'View monthly or weekly view', completed: false, page: 'calendar' },
-  { id: 'view_chart', text: 'View pie chart or bar graph', completed: false, page: 'calendar' }
+  { id: 'view_chart', text: 'View pie chart or bar graph', completed: false, page: 'calendar' },
+
+  // Forest items
+  { id: 'plant_tree', text: 'Plant a tree in the forest', completed: false, page: 'forest' }
 ];
 
 function createChecklistStore() {

@@ -44,7 +44,8 @@
   $: groupedChecklist = {
     tasks: checklist.filter(item => item.page === 'tasks'),
     countdown: checklist.filter(item => item.page === 'countdown'),
-    calendar: checklist.filter(item => item.page === 'calendar')
+    calendar: checklist.filter(item => item.page === 'calendar'),
+    forest: checklist.filter(item => item.page === 'forest')  
   };
   
   $: completedCount = checklist.filter(item => item.completed).length;
@@ -101,6 +102,17 @@
             <span class="checkbox">{item.completed ? '✓' : ''}</span>
             <span class="checklist-text">{item.text}</span>
           </div>
+        {/each}
+      </div>
+
+      <!-- Forest Section -->
+     <div class="section">
+        <h4 class="section-title">🌳 Forest</h4>
+          {#each groupedChecklist.forest as item (item.id)}
+           <div class="checklist-item" class:completed={item.completed}>
+          <span class="checkbox">{item.completed ? '✓' : ''}</span>
+          <span class="checklist-text">{item.text}</span>
+        </div>
         {/each}
       </div>
       
