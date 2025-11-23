@@ -9,6 +9,10 @@
   function goToHome() { goto(`${base}/`); }
   function goToCountdown() { goto(`${base}/countdown`); }
   function goToCalendar() { goto(`${base}/calender`); }
+  function goToForest() {
+    goto(`${base}/forest`);
+   }
+
 
   // Calendar types/state
   type CalEvent = {
@@ -225,6 +229,9 @@
     </div>
   </div>
   <nav class="sidebar-nav">
+    <button class="nav-item" on:click={goToForest}>
+          <img src="{base}/Images/tree.png" alt="Forest" style="width: 32px; height: 32px; object-fit: contain;" />
+    </button>
     <button class="nav-item" aria-label="Go to home" on:click={goToHome}>
       <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -263,13 +270,6 @@
       <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
         <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <button class="nav-item" aria-label="Sprout-ED" on:click={goToHome}>
-      <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
-        <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z" fill="#1a4d2e"/>
-        <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
       </svg>
     </button>
   </nav>

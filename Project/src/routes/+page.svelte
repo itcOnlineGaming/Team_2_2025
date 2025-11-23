@@ -6,6 +6,7 @@
   import UnifiedChecklist from '$lib/components/UnifiedChecklist.svelte';
   import { checklistStore } from '$lib/stores/checklist';
   import { availableTreesStore } from '$lib/stores/taskStore';
+  import TutorialPopup from '$lib/components/TutorialPopup.svelte';
 
   interface SubTask { id: number; title: string; status: string; }
   interface TaskData { 
@@ -83,7 +84,38 @@
   let popupMessage = '';
   let popupTimeout: NodeJS.Timeout;
 
-  onMount(() => {
+  // tutorial reference + steps
+  let tutorialComponent: any;
+
+  const tutorialSteps = [
+    {
+      title: "Welcome to Your Tasks!",
+      message: "This is your main task board. Here you can view all your tasks and organize your work.",
+      position: "center"
+    },
+    {
+      title: "Add New Tasks",
+      message: "Click the '+ Add Task' button to create a new task with dates, status, and color coding.",
+      position: "top-right"
+    },
+    {
+      title: "View Task Details",
+      message: "Click on any task card to view and edit its details, including notes and sub-tasks.",
+      position: "center"
+    },
+    {
+      title: "Add Sub-Tasks",
+      message: "Break down your tasks into smaller steps using the '+ Add Sub-Task' button on each task card.",
+      position: "center"
+    },
+    {
+      title: "Complete Tasks for Trees!",
+      message: "When you mark a task as 'Completed', you'll earn a tree for your forest! 🌳",
+      position: "center"
+    }
+  ];
+
+  onMount(async () => {
     const savedAgreement = localStorage.getItem('agreedToTest');
     const savedTasks = localStorage.getItem('tasks');
     const savedNextTaskId = localStorage.getItem('nextTaskId');
@@ -105,6 +137,12 @@
     if (savedNextSubTaskId) {
       nextSubTaskId = JSON.parse(savedNextSubTaskId);
     }
+
+    // ALWAYS start tutorial once page is mounted
+    await tick();
+    if (tutorialComponent) {
+      tutorialComponent.start();
+    }
   });
 
   function goToCountdown() {
@@ -116,10 +154,23 @@
 
   function goToForest() { goto(`${base}/forest`); }
 
-  function handleAgree() {
+  // navigation + tutorial controls
+  function goBack() {
+    window.history.back();
+  }
+
+  function startTutorial() {
+    if (tutorialComponent) {
+      tutorialComponent.start();
+    }
+  }
+
+  // handleAgree NO LONGER starts tutorial
+  async function handleAgree() {
     if (agreedToTest) {
       localStorage.setItem('agreedToTest', 'true');
       showWelcomePopup = false;
+      // no tutorial logic here anymore
     }
   }
 
@@ -140,7 +191,7 @@
       newTaskDueDate = task.dueDate;
       newTaskStatus = task.status;
       newTaskNotes = task.notes;
-      checklistStore.complete('view_task'); // CHANGED: Use store
+      checklistStore.complete('view_task');
     } else {
       selectedTask = null;
       isEditingTask = false;
@@ -161,25 +212,24 @@
   function saveTask() {
     if (!newTaskTitle.trim()) return;
 
-if (isEditingTask && selectedTask) {
-  tasks = tasks.map(t => 
-    t.id === selectedTask!.id 
-      ? { ...t, title: newTaskTitle, color: newTaskColor, startDate: newTaskStartDate, 
-          dueDate: newTaskDueDate, status: newTaskStatus, notes: newTaskNotes }
-      : t
-  );
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-  triggerPopup('✏️ Task updated!');
+    if (isEditingTask && selectedTask) {
+      tasks = tasks.map(t => 
+        t.id === selectedTask!.id 
+          ? { ...t, title: newTaskTitle, color: newTaskColor, startDate: newTaskStartDate, 
+              dueDate: newTaskDueDate, status: newTaskStatus, notes: newTaskNotes }
+          : t
+      );
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+      triggerPopup('✏️ Task updated!');
 
-  // Check if task was marked as completed
-  if (newTaskStatus === 'Completed' && selectedTask!.status !== 'Completed') {
-    availableTreesStore.increment();
-    triggerPopup('🎉 Task completed! You earned a tree! 🌳');
-    // Remove the completed task
-    tasks = tasks.filter(t => t.id !== selectedTask!.id);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }
-      // Note: 'edit_task' isn't in the new unified checklist, removed
+      // Check if task was marked as completed
+      if (newTaskStatus === 'Completed' && selectedTask!.status !== 'Completed') {
+        availableTreesStore.increment();
+        triggerPopup('🎉 Task completed! You earned a tree! 🌳');
+        // Remove the completed task
+        tasks = tasks.filter(t => t.id !== selectedTask!.id);
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      }
     } else {
       const newTask: TaskData = {
         id: nextTaskId++,
@@ -195,7 +245,7 @@ if (isEditingTask && selectedTask) {
       localStorage.setItem('tasks', JSON.stringify(tasks));
       localStorage.setItem('nextTaskId', JSON.stringify(nextTaskId));
       triggerPopup('✨ Task created!');
-      checklistStore.complete('add_task'); // CHANGED: Use store
+      checklistStore.complete('add_task');
     }
     
     showTaskModal = false;
@@ -235,7 +285,7 @@ if (isEditingTask && selectedTask) {
     localStorage.setItem('tasks', JSON.stringify(tasks));
     localStorage.setItem('nextSubTaskId', JSON.stringify(nextSubTaskId));
     triggerPopup('📋 Subtask added!');
-    checklistStore.complete('add_subtask'); // CHANGED: Use store
+    checklistStore.complete('add_subtask');
     showSubTaskModal = false;
   }
 
@@ -255,6 +305,7 @@ if (isEditingTask && selectedTask) {
     return '#6b7280';
   }
 </script>
+
 
 <main>
   {#if showWelcomePopup}
@@ -338,18 +389,8 @@ if (isEditingTask && selectedTask) {
             <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
-        
-        <button class="nav-item">
-          <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" fill="#4CAF50"/>
-            <path d="M12 8C10 8 8 10 8 12C8 13 9 14 10 14C8.5 14 7 15.5 7 17C7 18.5 8.5 20 10 20H14C15.5 20 17 18.5 17 17C17 15.5 15.5 14 14 14C15 14 16 13 16 12C16 10 14 8 12 8Z" fill="#1a4d2e"/>
-            <rect x="11" y="16" width="2" height="4" fill="#1a4d2e"/>
-          </svg>
-        </button>
       </nav>
     </div>
-
-    <!-- REMOVED: Old checklist div - replaced with component below -->
   {/if}
 
   <div class="content">
@@ -503,8 +544,14 @@ if (isEditingTask && selectedTask) {
     <div class="popup">{popupMessage}</div>
   {/if}
 
-  <!-- ADDED: New unified checklist component -->
   <UnifiedChecklist />
+
+    <TutorialPopup 
+    bind:this={tutorialComponent}
+    tutorialKey="home-tasks"
+    steps={tutorialSteps}
+    autoStart={false}
+  />
 </main>
 
 <style>

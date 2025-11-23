@@ -5,7 +5,7 @@
   import { onDestroy } from 'svelte';
   
   let checklist: ChecklistItem[] = [];
-  let isExpanded = false;
+  let isExpanded = true;
   let showPopup = false;
   let popupMessage = '';
   
