@@ -251,11 +251,9 @@
   }
 </script>
 
-<!-- your existing HTML + styles exactly as you have them -->
-
 <UnifiedChecklist />
 
-<!-- Tutorial component at the very end -->
+
 <TutorialPopup
   bind:this={tutorialComponent}
   tutorialKey="calendar"
@@ -555,5 +553,3 @@
     </div>
   </div>
 {/if}
-
-<UnifiedChecklist />
