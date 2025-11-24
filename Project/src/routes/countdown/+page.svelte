@@ -1,5 +1,5 @@
 <script lang="ts">
-  // =================== ORIGNALS ===================
+  // =================== ORIGINALS ===================
   import { onMount, tick } from 'svelte';
   import { writable } from 'svelte/store';
   import { goto } from '$app/navigation';
@@ -18,7 +18,7 @@
     },
     {
       title: "Set Time",
-      message: "Type your desired minutes and seconds, then click 'Reset Timer' to update.",
+      message: "Just type your desired minutes and seconds, and the timer updates automatically.",
       position: "center"
     },
     {
@@ -28,28 +28,28 @@
     },
     {
       title: "Reset When Needed",
-      message: "Click 'Reset Timer' to clear and restart. Great for Pomodoro or short sprints!",
+      message: "Click 'Reset to 25:00' to go back to Pomodoro default.",
       position: "center"
     }
   ];
 
-onMount(async () => {
-  timeLeft.set(totalSeconds);
-  
-  // ✅ ADD THIS CHECK - Only start tutorial if not completed
-  const tutorialCompleted = localStorage.getItem('tutorial-timer');
-  if (!tutorialCompleted) {
-    await tick();
-    if (tutorialComponent) {
-      tutorialComponent.start();
-    }
-  }
-});
+  onMount(async () => {
+    timeLeft.set(totalSeconds);
 
-  // =================== YOUR EXISTING TIMER CODE ===================
-  let minutes: number = 0;
-  let seconds: number = 25;
-  const timeLeft = writable(25);
+    // ✅ Only start tutorial if not completed
+    const tutorialCompleted = localStorage.getItem('tutorial-timer');
+    if (!tutorialCompleted) {
+      await tick();
+      if (tutorialComponent) {
+        tutorialComponent.start();
+      }
+    }
+  });
+
+  // =================== TIMER CODE WITH REACTIVE INPUTS ===================
+  let minutes: number = 25;
+  let seconds: number = 0;
+  const timeLeft = writable(25 * 60);
   let interval: ReturnType<typeof setInterval> | null = null;
   let isRunning: boolean = false;
   let showCompletionNotification: boolean = false;
@@ -59,6 +59,15 @@ onMount(async () => {
   $: if (seconds >= 60) {
     minutes += Math.floor(seconds / 60);
     seconds = seconds % 60;
+  }
+
+  // ✅ REACTIVE UPDATE: Updates timer when inputs change (only when not running)
+  $: {
+    if (!isRunning) {
+      const total = Math.max(1, totalSeconds);
+      timeLeft.set(total);
+      checklistStore.complete('set_timer');
+    }
   }
 
   // Navigation functions
@@ -116,17 +125,12 @@ onMount(async () => {
     else startTimer();
   }
 
-  function setCustomTime() {
+  // ✅ Resets to Pomodoro default
+  function resetToDefault() {
     pauseTimer();
-    const total = Math.max(1, totalSeconds);
-    timeLeft.set(total);
-    checklistStore.complete('set_timer');
-  }
-
-  function resetTimer() {
-    pauseTimer();
-    const total = Math.max(1, totalSeconds);
-    timeLeft.set(total);
+    minutes = 25;
+    seconds = 0;
+    timeLeft.set(25 * 60);
   }
 
   function closeCompletionNotification() {
@@ -140,12 +144,152 @@ onMount(async () => {
     }
   }
 
-  function handleInputKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      setCustomTime();
+  // ✅ Auto-pause when editing either input
+  function handleInputFocus() {
+    if (isRunning) {
+      pauseTimer();
     }
   }
 </script>
+
+<main>
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="15" r="8" fill="#90EE90"/>
+          <path d="M20 23 L20 35 M15 30 L25 30" stroke="#90EE90" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item" on:click={goToForest}>
+        <img src="{base}/Images/tree.png" alt="Forest" style="width: 32px; height: 32px; object-fit: contain;" />
+      </button>
+      <button class="nav-item" on:click={goToHome}>
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button class="nav-item">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="8" r="4" fill="white"/>
+          <path d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="nav-item">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="12" y="14" text-anchor="middle" fill="white" font-size="10" font-weight="bold">AI</text>
+        </svg>
+      </button>
+      <button class="nav-item" on:click={goToCalendar}>
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+          <path d="M3 10H21M8 2V6M16 2V6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <rect x="7" y="14" width="3" height="3" fill="white"/>
+          <rect x="14" y="14" width="3" height="3" fill="white"/>
+        </svg>
+      </button>
+      <button class="nav-item active">
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="13" r="9" stroke="white" stroke-width="2"/>
+          <path d="M12 13L12 8" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="nav-item" on:click={goToHome}>
+        <svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 22V12H15V22" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+
+  <div class="content">
+    <div class="header">
+      <h1>Timer</h1>
+      <input type="search" class="search-bar" placeholder="Search..." />
+    </div>
+    <div class="timer-card">
+      {#if showCompletionNotification}
+        <div class="notification-wrapper">
+          <div class="notification">
+            <div class="notification-content">
+              <span class="notification-text">{notificationMessage}</span>
+              <button class="close-btn" on:click={closeCompletionNotification}>×</button>
+            </div>
+          </div>
+        </div>
+      {/if}
+      <div class="timer-content">
+        <div class="timer-left">
+          <div class="time-label">TIMER</div>
+          <div class="flower-image">🌸</div>
+          <div class="timer-info">{isRunning ? 'Work Timer Running' : 'Ready to Start'}</div>
+        </div>
+        <div class="timer-right">
+          <div class="time-display-large">
+            <div class="time-value">{formatTime(totalSeconds)}</div>
+            <div 
+              class="time-display-main" 
+              on:click={toggleTimer} 
+              on:keydown={handleKeydown} 
+              role="button" 
+              tabindex="0"
+            >
+              {formattedTime}
+            </div>
+          </div>
+          <div class="timer-controls">
+            <div class="input-group">
+              <div class="input-field">
+                <label for="minutes">Minutes</label>
+                <input 
+                  id="minutes"
+                  type="number" 
+                  bind:value={minutes}
+                  on:focus={handleInputFocus}
+                  min="0"
+                  max="99"
+                />
+              </div>
+              <div class="input-field">
+                <label for="seconds">Seconds</label>
+                <input 
+                  id="seconds"
+                  type="number" 
+                  bind:value={seconds}
+                  on:focus={handleInputFocus}
+                  min="0"
+                  max="59"
+                />
+              </div>
+            </div>
+            <div class="button-group">
+              <button on:click={toggleTimer} class="btn-control btn-start">
+                {isRunning ? 'Pause Timer' : 'Start Timer'}
+              </button>
+              <button on:click={resetToDefault} class="btn-control btn-reset">
+                Reset to 25:00
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <UnifiedChecklist />
+  <TutorialPopup
+    bind:this={tutorialComponent}
+    tutorialKey="timer"
+    steps={tutorialSteps}
+    autoStart={false}
+  />
+</main>
 
 <main>
   <!-- Sidebar -->
