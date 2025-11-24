@@ -1,26 +1,27 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { checklistStore } from '$lib/stores/checklist';
-onMount(() => {
-  checklistStore.reset();     
-  
-  // Clear checklist and agreement
-  localStorage.removeItem('checklist');
-  localStorage.removeItem('agreedToTest');
-  
-  // ✅ Clear all tutorial completion flags
-  localStorage.removeItem('tutorial-home-tasks');
-  localStorage.removeItem('tutorial-timer');
-  localStorage.removeItem('tutorial-calendar');
-  localStorage.removeItem('tutorial-forest');
-  
-  // Optional: Clear all other app data if you want a complete reset
-  //localStorage.removeItem('calendarEvents_v2');
-  // localStorage.removeItem('tasks');
-  // localStorage.removeItem('forestData');
-  // localStorage.removeItem('nextTaskId');
-  // localStorage.removeItem('nextSubTaskId');
-});
+
+  onMount(() => {
+    checklistStore.reset();     
+    
+    // Clear checklist and agreement
+    localStorage.removeItem('checklist');
+    localStorage.removeItem('agreedToTest');
+    
+    // ✅ Clear all tutorial completion flags
+    localStorage.removeItem('tutorial-home-tasks');
+    localStorage.removeItem('tutorial-timer');
+    localStorage.removeItem('tutorial-calendar');
+    localStorage.removeItem('tutorial-forest');
+    
+    // Optional: Clear all other app data if you want a complete reset
+    // localStorage.removeItem('calendarEvents_v2');
+    // localStorage.removeItem('tasks');
+    // localStorage.removeItem('forestData');
+    // localStorage.removeItem('nextTaskId');
+    // localStorage.removeItem('nextSubTaskId');
+  });
 </script>
 
 <main>
@@ -52,6 +53,14 @@ onMount(() => {
 </main>
 
 <style>
+  /* 🔒 Force-hide the global sidebar ONLY on this page */
+  :global(.sidebar) {
+    display: none !important;
+  }
+
+  /* If any content on other pages relies on margin-left from the sidebar,
+     this page doesn't, so we don't need to adjust it here. */
+
   main {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     display: flex;
