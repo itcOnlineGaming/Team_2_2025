@@ -80,28 +80,30 @@
 
   let chartData: Array<{category:string;count:number;percentage:string;color:string;startAngle:number;endAngle:number}> = [];
 
-  onMount(() => {
-    if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem('calendarEvents_v2');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        events = parsed;
-        nextId = Math.max(0, ...parsed.map((e: any) => e.id)) + 1;
-      } catch (error) {
-        events = seedDefaults();
-        persist();
-      }
-    } else {
+onMount(() => {
+  if (typeof window === 'undefined') return;
+  const saved = localStorage.getItem('calendarEvents_v2');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      events = parsed;
+      nextId = Math.max(0, ...parsed.map((e: any) => e.id)) + 1;
+    } catch (error) {
       events = seedDefaults();
       persist();
     }
+  } else {
+    events = seedDefaults();
+    persist();
+  }
 
-    // Start calendar tutorial every time this page loads
-    if (tutorialComponent) {
-      tutorialComponent.start();
-    }
-  });
+  // ✅ ADD THIS CHECK - Only start tutorial if not completed
+  const tutorialCompleted = localStorage.getItem('tutorial-calendar');
+  if (!tutorialCompleted && tutorialComponent) {
+    tutorialComponent.start();
+  }
+});
+
 
   function seedDefaults(): CalEvent[] {
     const now = new Date();

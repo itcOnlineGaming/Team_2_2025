@@ -1,11 +1,26 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { checklistStore } from '$lib/stores/checklist';
-  onMount(() => {
-    checklistStore.reset();     
-    localStorage.removeItem('checklist');
-    localStorage.removeItem('agreedToTest');
-  });
+onMount(() => {
+  checklistStore.reset();     
+  
+  // Clear checklist and agreement
+  localStorage.removeItem('checklist');
+  localStorage.removeItem('agreedToTest');
+  
+  // ✅ Clear all tutorial completion flags
+  localStorage.removeItem('tutorial-home-tasks');
+  localStorage.removeItem('tutorial-timer');
+  localStorage.removeItem('tutorial-calendar');
+  localStorage.removeItem('tutorial-forest');
+  
+  // Optional: Clear all other app data if you want a complete reset
+  //localStorage.removeItem('calendarEvents_v2');
+  // localStorage.removeItem('tasks');
+  // localStorage.removeItem('forestData');
+  // localStorage.removeItem('nextTaskId');
+  // localStorage.removeItem('nextSubTaskId');
+});
 </script>
 
 <main>

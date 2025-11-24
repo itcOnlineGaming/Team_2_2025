@@ -33,11 +33,18 @@
     }
   ];
 
-  onMount(async () => {
-    timeLeft.set(totalSeconds);
+onMount(async () => {
+  timeLeft.set(totalSeconds);
+  
+  // ✅ ADD THIS CHECK - Only start tutorial if not completed
+  const tutorialCompleted = localStorage.getItem('tutorial-timer');
+  if (!tutorialCompleted) {
     await tick();
-    if (tutorialComponent) tutorialComponent.start();
-  });
+    if (tutorialComponent) {
+      tutorialComponent.start();
+    }
+  }
+});
 
   // =================== YOUR EXISTING TIMER CODE ===================
   let minutes: number = 0;

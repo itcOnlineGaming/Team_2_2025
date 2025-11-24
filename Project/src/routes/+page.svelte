@@ -115,36 +115,51 @@
     }
   ];
 
-  onMount(async () => {
-    const savedAgreement = localStorage.getItem('agreedToTest');
-    const savedTasks = localStorage.getItem('tasks');
-    const savedNextTaskId = localStorage.getItem('nextTaskId');
-    const savedNextSubTaskId = localStorage.getItem('nextSubTaskId');
+   onMount(async () => {
+  const savedAgreement = localStorage.getItem('agreedToTest');
+  const savedTasks = localStorage.getItem('tasks');
+  const savedNextTaskId = localStorage.getItem('nextTaskId');
+  const savedNextSubTaskId = localStorage.getItem('nextSubTaskId');
+  
+  if (savedAgreement === 'true') {
+    showWelcomePopup = false;
+    agreedToTest = true;
     
-    if (savedAgreement === 'true') {
-      showWelcomePopup = false;
-      agreedToTest = true;
+    const tutorialCompleted = localStorage.getItem('tutorial-home-tasks');
+    if (!tutorialCompleted) {
+      await tick();
+      if (tutorialComponent) {
+        tutorialComponent.start();
+      }
     }
+  }
 
-    if (savedTasks) {
-      tasks = JSON.parse(savedTasks);
+  if (savedTasks) {
+    tasks = JSON.parse(savedTasks);
+  }
+
+  if (savedNextTaskId) {
+    nextTaskId = JSON.parse(savedNextTaskId);
+  }
+
+  if (savedNextSubTaskId) {
+    nextSubTaskId = JSON.parse(savedNextSubTaskId);
+  }
+});
+ // Modified handleAgree to start tutorial after agreement
+async function handleAgree() {
+  if (agreedToTest) {
+    localStorage.setItem('agreedToTest', 'true');
+    showWelcomePopup = false;
+    const tutorialCompleted = localStorage.getItem('tutorial-home-tasks');
+    if (!tutorialCompleted) {
+      await tick();
+      if (tutorialComponent) {
+        tutorialComponent.start();
+      }
     }
-
-    if (savedNextTaskId) {
-      nextTaskId = JSON.parse(savedNextTaskId);
-    }
-
-    if (savedNextSubTaskId) {
-      nextSubTaskId = JSON.parse(savedNextSubTaskId);
-    }
-
-    // ALWAYS start tutorial once page is mounted
-    await tick();
-    if (tutorialComponent) {
-      tutorialComponent.start();
-    }
-  });
-
+  }
+}
   function goToCountdown() {
     goto(`${base}/countdown`);
   }
@@ -162,15 +177,6 @@
   function startTutorial() {
     if (tutorialComponent) {
       tutorialComponent.start();
-    }
-  }
-
-  // handleAgree NO LONGER starts tutorial
-  async function handleAgree() {
-    if (agreedToTest) {
-      localStorage.setItem('agreedToTest', 'true');
-      showWelcomePopup = false;
-      // no tutorial logic here anymore
     }
   }
 

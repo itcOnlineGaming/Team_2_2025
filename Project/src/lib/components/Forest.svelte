@@ -88,26 +88,33 @@
     if (savedId) nextId = JSON.parse(savedId);
   }
 
-  onMount(async () => {
-    loadForest();
-    availableTreesStore.load();
-    
-    const raw = localStorage.getItem("forestData");
-    const saved = raw ? JSON.parse(raw) : null;
-    if (saved) {
-      completedTasks = saved.completedTasks;
-      streak = saved.streak;
-      hasTree = saved.completedTasks > 0;
-    }
+onMount(async () => { 
+  loadForest();
+  availableTreesStore.load();
+  
+  const raw = localStorage.getItem("forestData");
+  const saved = raw ? JSON.parse(raw) : null;
+  if (saved) {
+    completedTasks = saved.completedTasks;
+    streak = saved.streak;
+    hasTree = saved.completedTasks > 0;
+  }
 
-    const interval = setInterval(() => {
-      forest = [...forest];
-    }, 1000);
+  const interval = setInterval(() => {
+    forest = [...forest];
+  }, 1000);
+
+  // ✅ ADD THIS CHECK - Only start tutorial if not completed
+  const tutorialCompleted = localStorage.getItem('tutorial-forest');
+  if (!tutorialCompleted) {
     await tick();
-    if (tutorialComponent) tutorialComponent.start();
+    if (tutorialComponent) {
+      tutorialComponent.start();
+    }
+  }
 
-    return () => clearInterval(interval);
-  });
+  return () => clearInterval(interval);
+});
 
   function save() {
     localStorage.setItem(
