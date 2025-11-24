@@ -230,6 +230,13 @@
 </div>
 
 <style>
+  /* 🔧 Only addition: remove the browser's default margin so there's no white border */
+  :global(html, body, #svelte) {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+
   .app-layout {
     min-height: 100vh;
   }
