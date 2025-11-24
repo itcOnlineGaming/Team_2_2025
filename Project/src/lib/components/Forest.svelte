@@ -14,11 +14,9 @@
   let forest = [];
   let nextId = 1;
 
-  // Growth phase durations (in milliseconds)
-  const SPROUT_DURATION = 2 * 60 * 1000; // 2 minutes for testing
-  const SAPLING_DURATION = 5 * 60 * 1000; // 5 minutes for testing
+  const SPROUT_DURATION = 2 * 60 * 1000;
+  const SAPLING_DURATION = 5 * 60 * 1000;
 
-  // Subscribe to the store
   availableTreesStore.subscribe(value => {
     availableTrees = value;
   });
@@ -33,13 +31,12 @@
       { 
         id: nextId++, 
         size: randomSize(),
-        plantedAt: Date.now() // Store timestamp when planted
+        plantedAt: Date.now()
       }
     ];
     availableTreesStore.decrement();
     saveForest();
 
-    // Mark forest checklist item as done
     checklistStore.complete('plant_tree');
   }
 
@@ -47,7 +44,6 @@
     return 60 + Math.floor(Math.random() * 80);
   }
 
-  // Calculate growth phase based on time elapsed
   function getGrowthPhase(plantedAt) {
     const elapsed = Date.now() - plantedAt;
     
@@ -60,7 +56,6 @@
     }
   }
 
-  // Get growth progress percentage within current phase
   function getGrowthProgress(plantedAt) {
     const elapsed = Date.now() - plantedAt;
     
@@ -83,7 +78,6 @@
     const saved = localStorage.getItem("forest_list");
     if (saved) {
       forest = JSON.parse(saved);
-      // If old trees don't have plantedAt, add it as current time
       forest = forest.map(tree => ({
         ...tree,
         plantedAt: tree.plantedAt || Date.now()
@@ -106,9 +100,8 @@
       hasTree = saved.completedTasks > 0;
     }
 
-    // Update tree growth every second
     const interval = setInterval(() => {
-      forest = [...forest]; // Trigger reactivity
+      forest = [...forest];
     }, 1000);
     await tick();
     if (tutorialComponent) tutorialComponent.start();
@@ -138,7 +131,6 @@
       localStorage.setItem("lastCompletionDay", today);
     }
 
-    // Add a tree that can be planted
     availableTreesStore.increment();
 
     save();
@@ -148,7 +140,6 @@
     return Math.min(200, 50 + completedTasks * 10);
   }
 
-  // Helper to format time remaining
   function getTimeUntilNextPhase(plantedAt) {
     const elapsed = Date.now() - plantedAt;
     const phase = getGrowthPhase(plantedAt);
@@ -322,13 +313,15 @@
   }
 
   .forest-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 30px;
     margin-top: 30px;
     padding: 20px;
     background: #f0f0f0;
     border-radius: 10px;
+    max-height: 600px;
+    overflow-y: auto;
   }
 
   .tree-wrapper {
