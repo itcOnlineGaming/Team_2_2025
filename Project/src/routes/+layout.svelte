@@ -63,6 +63,14 @@
 					<span class="nav-label">Forest</span>
 				</button>
 
+        <!-- Back (hidden on home page) -->
+				{#if !isHomePath($page.url.pathname)}
+					<button class="nav-item" on:click={goToHome} type="button">
+						<img class="nav-icon-img" src={base + '/Images/icons/back_arrow.png'} alt="Back" />
+						<span class="nav-label">Back</span>
+					</button>
+				{/if}
+
 				<!-- Home -->
 				<button class="nav-item" on:click={goToHome} type="button">
 					<img class="nav-icon-img" src={base + '/Images/icons/home_button.png'} alt="Home" />
@@ -86,14 +94,6 @@
 					</svg>
 					<span class="nav-label">Countdown</span>
 				</button>
-
-				<!-- Back (hidden on home page) -->
-				{#if !isHomePath($page.url.pathname)}
-					<button class="nav-item" on:click={goToHome} type="button">
-						<img class="nav-icon-img" src={base + '/Images/icons/back_arrow.png'} alt="Back" />
-						<span class="nav-label">Back</span>
-					</button>
-				{/if}
 			</nav>
 		</div>
 	{/if}
