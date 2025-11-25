@@ -208,8 +208,9 @@
 
   function saveTask() {
     if (!newTaskTitle.trim()) return;
-
+    
     if (isEditingTask && selectedTask) {
+      // Logic for editing existing task (Completion logic REMOVED from here)
       tasks = tasks.map(t => 
         t.id === selectedTask!.id 
           ? { ...t, title: newTaskTitle, color: newTaskColor, startDate: newTaskStartDate, 
@@ -218,16 +219,8 @@
       );
       localStorage.setItem('tasks', JSON.stringify(tasks));
       triggerPopup('✏️ Task updated!');
-
-      // Check if task was marked as completed
-      if (newTaskStatus === 'Completed' && selectedTask!.status !== 'Completed') {
-        availableTreesStore.increment();
-        triggerPopup('🎉 Task completed! You earned a tree! 🌳');
-        // Remove the completed task
-        tasks = tasks.filter(t => t.id !== selectedTask!.id);
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-      }
     } else {
+      // Logic for creating new task
       const newTask: TaskData = {
         id: nextTaskId++,
         title: newTaskTitle,
@@ -247,6 +240,37 @@
     
     showTaskModal = false;
     resetTaskForm();
+  }
+
+  let showDeleteConfirm = false;
+  let taskToDelete: TaskData | null = null;
+
+  function toggleTaskStatus(task: TaskData) {
+    // Toggle between Completed and In Progress/Not Started
+    const newStatus = task.status === 'Completed' ? 'In Progress' : 'Completed';
+    
+    tasks = tasks.map(t => 
+      t.id === task.id ? { ...t, status: newStatus } : t
+    );
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
+  function requestDelete(task: TaskData) {
+    taskToDelete = task;
+    showDeleteConfirm = true;
+  }
+
+  function confirmDelete() {
+    if (taskToDelete) {
+      availableTreesStore.increment();
+      triggerPopup('🎉 Task finished! You earned a tree! 🌳');
+      
+      // Remove the task
+      tasks = tasks.filter(t => t.id !== taskToDelete!.id);
+      localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+    showDeleteConfirm = false;
+    taskToDelete = null;
   }
 
   function deleteTask() {
@@ -342,7 +366,30 @@
         {#each tasks as task (task.id)}
           <div class="task-card" style="border-left: 6px solid {task.color}; background: {task.color}20;">
             <div class="task-main" on:click={() => openTaskModal(task)} on:keydown={(e) => e.key === 'Enter' && openTaskModal(task)} role="button" tabindex="0">
-              <div class="task-title">{task.title}</div>
+              <div class="task-header-row">
+                <div class="title-row">
+                  <div class="task-title">{task.title}</div>
+                  <div class="edit-hint">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                    Edit Task Details
+                  </div>
+                </div>
+                
+                <div class="complete-toggle" on:click|stopPropagation>
+                  <span class="toggle-label">{task.status === 'Completed' ? 'Task Completed' : 'Task in Progress'}</span>
+                  <label class="switch">
+                    <input type="checkbox" checked={task.status === 'Completed'} on:change={() => toggleTaskStatus(task)}>
+                    <span class="slider round"></span>
+                  </label>
+
+                  {#if task.status === 'Completed'}
+                    <button class="finalize-btn" on:click|stopPropagation={() => requestDelete(task)}>
+                      REMOVE
+                    </button>
+                  {/if}
+                </div>
+              </div>
+              
               <div class="task-dates">
                 {#if task.startDate || task.dueDate}
                   <span class="date-badge">
@@ -351,7 +398,6 @@
                 {/if}
               </div>
             </div>
-            
             {#if task.subTasks.length > 0}
               <div class="subtasks">
                 {#each task.subTasks as subtask (subtask.id)}
@@ -400,14 +446,6 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label>Status</label>
-              <select bind:value={newTaskStatus}>
-                <option>Not Started</option>
-                <option>In Progress</option>
-                <option>Completed</option>
-              </select>
-            </div>
             <div class="form-group">
               <label>Color</label>
               <input type="color" bind:value={newTaskColor} />
@@ -475,6 +513,19 @@
 
   {#if showPopup}
     <div class="popup">{popupMessage}</div>
+  {/if}
+
+  {#if showDeleteConfirm}
+    <div class="modal-overlay" style="z-index: 4000;">
+      <div class="modal small confirm-modal">
+        <h3>Are you sure?</h3>
+        <p>This will permanently remove the task and add a tree to your forest.</p>
+        <div class="modal-footer" style="justify-content: center;">
+          <button class="cancel-btn" on:click={() => showDeleteConfirm = false}>Cancel</button>
+          <button class="confirm-btn" on:click={confirmDelete}>Yes, Collect Tree!</button>
+        </div>
+      </div>
+    </div>
   {/if}
 
   <UnifiedChecklist />
@@ -644,10 +695,112 @@
     margin-bottom: 15px;
   }
 
+  .task-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; 
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .title-row {
+    display: flex;
+    align-items: center; 
+    flex-wrap: wrap;     
+    gap: 10px;           
+    flex: 1;
+  }
+
   .task-title {
     font-size: 18px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 0 !important;
+    line-height: 1.2;
+  }
+
+  .edit-hint {
+    font-size: 11px;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.7;
+    white-space: nowrap;
+    padding-top: 2px;
+  }
+  
+  .task-main:hover .edit-hint {
+    opacity: 1;
+    text-decoration: underline;
+  }
+
+  .complete-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; 
+    gap: 2px;
+    min-width: 40px; 
+    z-index: 10;
+  }
+
+  .toggle-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #555;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+  }
+
+  .switch input { 
+    opacity: 0; 
+    width: 0; 
+    height: 0; 
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 14px; width: 14px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+
+  input:checked + .slider { background-color: #10b981; }
+  input:checked + .slider:before { transform: translateX(14px); }
+
+  .finalize-btn {
+    margin-top: 5px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 9px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .finalize-btn:hover {
+    background: #dc2626;
   }
 
   .task-dates {
@@ -982,6 +1135,39 @@
     font-weight: 500;
   }
 
+  .confirm-modal {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .confirm-modal h3 {
+    margin-top: 0;
+    color: #374151;
+  }
+
+  .cancel-btn {
+    padding: 10px 20px;
+    background: #e5e7eb;
+    color: #374151;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .confirm-btn {
+    padding: 10px 20px;
+    background: #10b981; 
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cancel-btn:hover { background: #d1d5db; }
+  .confirm-btn:hover { background: #059669; }
+
   @keyframes slideInUp {
     from {
       transform: translateY(100px);
@@ -993,7 +1179,11 @@
     }
   }
 
-  /* Scrollbar styling */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .modal::-webkit-scrollbar {
     width: 8px;
   }
@@ -1012,7 +1202,6 @@
     background: #555;
   }
 
-  /* Enhanced focus states for accessibility */
   .nav-item:focus,
   .add-task-btn:focus,
   .add-subtask-btn:focus,
@@ -1030,7 +1219,6 @@
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
 
-  /* Responsive adjustments */
   @media (max-width: 768px) {
     .content {
       margin-left: 0;
