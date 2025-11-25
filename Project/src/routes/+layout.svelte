@@ -31,6 +31,11 @@
 	// Routes where the sidebar should NOT be shown
 	const hideSidebarOn = ['/end'];
 
+	// Check if current path should hide sidebar
+	function shouldHideSidebar(pathname: string) {
+		return hideSidebarOn.some(route => pathname.endsWith(route));
+	}
+
 	// Hide Back button on the base (home) page
 	function isHomePath(pathname: string) {
 		const home = base && base !== '' ? base : '/';
@@ -45,7 +50,7 @@
 </svelte:head>
 
 <div class="app-layout">
-	{#if !hideSidebarOn.includes($page.url.pathname)}
+	{#if !shouldHideSidebar($page.url.pathname)}
 		<!-- Sidebar with expandable state -->
 		<div class="sidebar" class:expanded={isExpanded}>
 			<div class="sidebar-content">
@@ -138,7 +143,11 @@
 	{/if}
 
 	<!-- Child pages render here -->
-	<main class="main-content" class:shifted={isExpanded}>
+	<main 
+		class="main-content" 
+		class:shifted={isExpanded && !shouldHideSidebar($page.url.pathname)}
+		class:no-sidebar={shouldHideSidebar($page.url.pathname)}
+	>
 		{@render children?.()}
 	</main>
 </div>
@@ -308,6 +317,10 @@
 
 	.main-content.shifted {
 		margin-left: 220px;
+	}
+
+	.main-content.no-sidebar {
+		margin-left: 0;
 	}
 
 	@keyframes fadeIn {
