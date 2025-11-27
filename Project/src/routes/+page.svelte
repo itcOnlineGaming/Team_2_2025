@@ -143,6 +143,8 @@
     if (savedNextSubTaskId) {
       nextSubTaskId = JSON.parse(savedNextSubTaskId);
     }
+
+    window.addEventListener('open-tutorials', showTutorial);
   });
 
   // Modified handleAgree to start tutorial after agreement
@@ -168,6 +170,16 @@
   function startTutorial() {
     if (tutorialComponent) {
       tutorialComponent.start();
+    }
+  }
+
+  function showTutorial() {
+    if (tutorialComponent) {
+      if (typeof tutorialComponent.restart === 'function') {
+        tutorialComponent.restart();
+      } else if (typeof tutorialComponent.start === 'function') {
+        tutorialComponent.start();
+      }
     }
   }
 

@@ -102,7 +102,19 @@ onMount(() => {
   if (!tutorialCompleted && tutorialComponent) {
     tutorialComponent.start();
   }
+
+  window.addEventListener('open-tutorials', showTutorial);
 });
+
+  function showTutorial() {
+    if (tutorialComponent) {
+      if (typeof tutorialComponent.restart === 'function') {
+        tutorialComponent.restart();
+      } else if (typeof tutorialComponent.start === 'function') {
+        tutorialComponent.start();
+      }
+    }
+  }
 
 
   function seedDefaults(): CalEvent[] {
@@ -436,7 +448,7 @@ onMount(() => {
   .sidebar-nav { display:flex; flex-direction:column; gap:20px; }
   .nav-item { width:50px; height:50px; border-radius:12px; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.2); }
-  .content { margin-left:70px; padding:20px 40px; min-height:100vh; background:#ABDE9D; }
+  .content { padding:20px 40px; min-height:100vh; background:#ABDE9D; }
   .header { background:#03440C; padding:15px 30px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
   .header h1 { color:white; font-size:24px; margin:0; }
   .search-bar { padding:8px 16px; border-radius:20px; border:none; width:300px; font-size:14px; }

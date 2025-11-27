@@ -26,7 +26,6 @@
     :global(body) { margin:0; }
 
     .content {
-        margin-left:70px;
         padding:20px 40px;
         min-height:100vh;
         background:#ABDE9D;

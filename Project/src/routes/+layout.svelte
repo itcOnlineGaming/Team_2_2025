@@ -28,12 +28,21 @@
 		goto(`${base}/`);
 	}
 
-	// Routes where the sidebar should NOT be shown
-	const hideSidebarOn = ['/end'];
+	function openTutorials() {
+		if (typeof window !== 'undefined') {
+			window.dispatchEvent(new CustomEvent('open-tutorials'));
+		}
+	}
 
-	// Check if current path should hide sidebar
+	// Routes where the sidebar should NOT be shown
+	const hideSidebarOn =
+		['/signup', '/login', '/forgot-password', '/reset-password', '/terms', '/privacy'].map(
+			(path) => (base && base !== '' ? `${base}${path}` : path)
+		);
+
+	// Determine if the sidebar should be hidden on the current route
 	function shouldHideSidebar(pathname: string) {
-		return hideSidebarOn.some(route => pathname.endsWith(route));
+		return hideSidebarOn.some((path) => pathname.startsWith(path));
 	}
 
 	// Hide Back button on the base (home) page
@@ -71,7 +80,7 @@
 					{/if}
 				</div>
 
-				<!-- Back (hidden on home page) -->
+				<!-- Back button (hidden on home/base route) -->
 				{#if !isHomePath($page.url.pathname)}
 					<button class="nav-item" on:click={goToHome} type="button">
 						<img class="nav-icon-img" src={base + '/Images/icons/back_arrow.png'} alt="Back" />
@@ -110,9 +119,29 @@
 					<button class="nav-item" on:click={goToCountdown} type="button">
 						<svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
 							<circle cx="12" cy="13" r="9" stroke="white" stroke-width="2" />
-							<path d="M12 13L12 8" stroke="white" stroke-width="2" stroke-linecap="round" />
-							<path d="M12 13L15 15" stroke="white" stroke-width="2" stroke-linecap="round" />
-							<path d="M10 3L14 3" stroke="white" stroke-width="2" stroke-linecap="round" />
+							<path
+								d="M12 13L15 10"
+								stroke="white"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M8 1H10"
+								stroke="white"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path
+								d="M14 1H16"
+								stroke="white"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<path d="M9 4V3" stroke="white" stroke-width="2" stroke-linecap="round" />
+							<path d="M15 4V3" stroke="white" stroke-width="2" stroke-linecap="round" />
 							<path d="M12 3L12 4" stroke="white" stroke-width="2" stroke-linecap="round" />
 						</svg>
 						{#if isExpanded}
@@ -120,6 +149,33 @@
 						{/if}
 					</button>
 				</nav>
+				
+  				<div class="tutorial-nav-wrapper">
+					<button
+						class="nav-item tutorial-nav"
+						type="button"
+						on:click={openTutorials}
+					>
+						<svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+							<!-- Circle outline -->
+							<circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" />
+							<!-- Question mark curve -->
+							<path
+								d="M11 9.5C11 8.39543 11.8954 7.5 13 7.5C14.1046 7.5 15 8.39543 15 9.5C15 10.4314 14.5 11 13.9 11.4C13.3 11.8 13 12.1 13 13"
+								stroke="white"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+							/>
+							<!-- Dot -->
+							<circle cx="12" cy="16" r="1" fill="white" />
+						</svg>
+
+						{#if isExpanded}
+							<span class="nav-label">Tutorial</span>
+						{/if}
+					</button>
+				</div>
 			</div>
 
 			<!-- Toggle button on right edge -->
@@ -127,10 +183,22 @@
 				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 					{#if isExpanded}
 						<!-- Left arrow "<" -->
-						<path d="M10 4L6 8L10 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						<path
+							d="M10 4L6 8L10 12"
+							stroke="white"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
 					{:else}
 						<!-- Right arrow ">" -->
-						<path d="M6 4L10 8L6 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+						<path
+							d="M6 4L10 8L6 12"
+							stroke="white"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
 					{/if}
 				</svg>
 			</button>
@@ -143,9 +211,9 @@
 	{/if}
 
 	<!-- Child pages render here -->
-	<main 
-		class="main-content" 
-		class:shifted={isExpanded && !shouldHideSidebar($page.url.pathname)}
+	<main
+		class="main-content"
+		class:sidebar-visible={!shouldHideSidebar($page.url.pathname)}
 		class:no-sidebar={shouldHideSidebar($page.url.pathname)}
 	>
 		{@render children?.()}
@@ -202,15 +270,13 @@
 
 	.logo svg {
 		display: block;
-		flex-shrink: 0;
 	}
 
 	.brand-name {
-		font-size: 18px;
+		font-size: 1.1rem;
 		font-weight: 600;
-		color: #90EE90;
+		color: #f0fff0;
 		white-space: nowrap;
-		animation: fadeIn 0.3s ease-in-out;
 	}
 
 	.sidebar-nav {
@@ -223,51 +289,45 @@
 
 	.nav-item {
 		width: 100%;
-		height: auto;
-		min-height: 50px;
-		border-radius: 12px;
-		border: none;
 		background: transparent;
-		cursor: pointer;
+		border: none;
+		color: #f0fff0;
 		display: flex;
-		flex-direction: row;
 		align-items: center;
-		justify-content: flex-start;
 		gap: 12px;
-		transition: all 0.2s;
-		padding: 8px 10px;
-		color: white;
+		padding: 10px 12px;
+		border-radius: 10px;
+		cursor: pointer;
+		transition: background 0.2s, transform 0.1s;
 	}
 
 	.nav-item:hover {
-		background: rgba(255, 255, 255, 0.15);
+		background: rgba(255, 255, 255, 0.08);
+		transform: translateX(2px);
 	}
 
 	.nav-item:active {
-		background: rgba(255, 255, 255, 0.25);
+		transform: translateX(1px) scale(0.99);
+	}
+
+	.nav-icon-img {
+		width: 32px;
+		height: 32px;
+		border-radius: 6px;
+		object-fit: contain;
+		display: block;
 	}
 
 	.nav-icon-svg {
 		width: 24px;
 		height: 24px;
-		flex-shrink: 0;
-		margin-left: 5px;
-	}
-
-	.nav-icon-img {
-		width: 34px;
-		height: 34px;
-		object-fit: contain;
-		display: block;
-		flex-shrink: 0;
 	}
 
 	.nav-label {
-		font-size: 14px;
-		color: #ffffff;
+		font-size: 0.96rem;
 		font-weight: 500;
+		color: #f5fff5;
 		white-space: nowrap;
-		animation: fadeIn 0.3s ease-in-out;
 	}
 
 	.toggle-btn {
@@ -286,7 +346,6 @@
 		justify-content: center;
 		transition: all 0.2s;
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-		z-index: 1001;
 	}
 
 	.toggle-btn:hover {
@@ -305,17 +364,22 @@
 		right: 0;
 		bottom: 0;
 		background: rgba(0, 0, 0, 0.3);
-		z-index: 999;
-		animation: fadeIn 0.3s ease-in-out;
+		z-index: 900;
 	}
 
 	.main-content {
 		margin-left: 70px;
-		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		min-height: 100vh;
+		transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		position: relative;
+		z-index: 1;
 	}
 
-	.main-content.shifted {
+	.main-content.sidebar-visible {
+		margin-left: 70px;
+	}
+
+	.sidebar.expanded ~ .main-content.sidebar-visible {
 		margin-left: 220px;
 	}
 
@@ -323,81 +387,34 @@
 		margin-left: 0;
 	}
 
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-
-	/* Mobile styles */
 	@media (max-width: 768px) {
 		.sidebar {
-			width: 100%;
-			height: auto;
-			position: fixed;
-			bottom: 0;
-			top: auto;
-			left: 0;
-			flex-direction: row;
-			padding: 10px 0;
-			box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+			width: 60px;
 		}
 
 		.sidebar.expanded {
-			width: 100%;
-			height: auto;
+			width: 200px;
 		}
 
-		.sidebar-content {
-			flex-direction: row;
-			padding: 0;
-			width: 100%;
-			justify-content: space-around;
+		.main-content,
+		.main-content.sidebar-visible {
+			margin-left: 60px;
+		}
+
+		.sidebar.expanded ~ .main-content.sidebar-visible {
+			margin-left: 200px;
 		}
 
 		.sidebar-header {
-			display: none;
+			margin-bottom: 20px;
 		}
 
-		.sidebar-nav {
-			flex-direction: row;
-			gap: 10px;
-			padding: 0;
-			justify-content: space-around;
-			width: 100%;
+		.brand-name {
+			font-size: 1rem;
 		}
 
 		.nav-item {
-			flex-direction: column;
-			gap: 4px;
-			min-height: auto;
-			width: auto;
-			padding: 8px 12px;
-		}
-
-		.nav-label {
-			font-size: 10px;
-			animation: none;
-		}
-
-		.toggle-btn {
-			display: none;
-		}
-
-		.sidebar-overlay {
-			display: none;
-		}
-
-		.main-content {
-			margin-left: 0;
-			margin-bottom: 70px;
-		}
-
-		.main-content.shifted {
-			margin-left: 0;
+			padding: 8px 10px;
 		}
 
 		.nav-icon-img {
@@ -410,5 +427,42 @@
 			height: 20px;
 			margin-left: 0;
 		}
-	}
+
+  .tutorial-nav-wrapper {
+    margin-top: auto;
+    padding: 0 10px 12px 10px;
+  }
+
+  .tutorial-nav {
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  /* Line-art "?" in a circle, using currentColor (white) */
+  .tutorial-icon-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: 2px solid currentColor;
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Optional: subtle distinction on hover, same as other nav items */
+  .tutorial-nav:hover {
+    opacity: 0.9;
+    transform: translateX(2px);
+    transition:
+      opacity 0.15s ease-out,
+      transform 0.15s ease-out;
+  }
+}
+
 </style>

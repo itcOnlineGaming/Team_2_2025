@@ -44,7 +44,19 @@
         tutorialComponent.start();
       }
     }
+
+    window.addEventListener('open-tutorials', showTutorial);
   });
+
+  function showTutorial() {
+    if (tutorialComponent) {
+      if (typeof tutorialComponent.restart === 'function') {
+        tutorialComponent.restart();
+      } else if (typeof tutorialComponent.start === 'function') {
+        tutorialComponent.start();
+      }
+    }
+  }
 
   // =================== TIMER CODE WITH REACTIVE INPUTS ===================
   let minutes: number = 25;

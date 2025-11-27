@@ -113,9 +113,21 @@ onMount(async () => {
     }
   }
 
+  window.addEventListener('open-tutorials', showTutorial);
+
   return () => clearInterval(interval);
 });
 
+  function showTutorial() {
+    if (tutorialComponent) {
+      if (typeof tutorialComponent.restart === 'function') {
+        tutorialComponent.restart();
+      } else if (typeof tutorialComponent.start === 'function') {
+        tutorialComponent.start();
+      }
+    }
+  }
+  
   function save() {
     localStorage.setItem(
       "forestData",
