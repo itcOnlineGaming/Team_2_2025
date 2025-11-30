@@ -35,10 +35,15 @@
 	}
 
 	// Routes where the sidebar should NOT be shown
-	const hideSidebarOn =
-		['/signup', '/login', '/forgot-password', '/reset-password', '/terms', '/privacy'].map(
-			(path) => (base && base !== '' ? `${base}${path}` : path)
-		);
+	const hideSidebarOn = [
+		'/signup',
+		'/login',
+		'/forgot-password',
+		'/reset-password',
+		'/terms',
+		'/privacy',
+		'/end'
+	].map((path) => (base && base !== '' ? `${base}${path}` : path));
 
 	// Determine if the sidebar should be hidden on the current route
 	function shouldHideSidebar(pathname: string) {
@@ -76,7 +81,7 @@
 						</svg>
 					</div>
 					{#if isExpanded}
-						<span class="brand-name">TreeApp</span>
+						<span class="brand-name">Sprout-ED</span>
 					{/if}
 				</div>
 
@@ -149,17 +154,12 @@
 						{/if}
 					</button>
 				</nav>
-				
-  				<div class="tutorial-nav-wrapper">
-					<button
-						class="nav-item tutorial-nav"
-						type="button"
-						on:click={openTutorials}
-					>
+
+				<!-- Tutorial button at bottom -->
+				<div class="tutorial-nav-wrapper">
+					<button class="nav-item tutorial-nav" type="button" on:click={openTutorials}>
 						<svg class="nav-icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-							<!-- Circle outline -->
 							<circle cx="12" cy="12" r="9" stroke="white" stroke-width="2" />
-							<!-- Question mark curve -->
 							<path
 								d="M11 9.5C11 8.39543 11.8954 7.5 13 7.5C14.1046 7.5 15 8.39543 15 9.5C15 10.4314 14.5 11 13.9 11.4C13.3 11.8 13 12.1 13 13"
 								stroke="white"
@@ -167,10 +167,8 @@
 								stroke-linecap="round"
 								stroke-linejoin="round"
 							/>
-							<!-- Dot -->
 							<circle cx="12" cy="16" r="1" fill="white" />
 						</svg>
-
 						{#if isExpanded}
 							<span class="nav-label">Tutorial</span>
 						{/if}
@@ -182,7 +180,6 @@
 			<button class="toggle-btn" on:click={toggleSidebar} type="button" aria-label="Toggle sidebar">
 				<svg width="16" height="16" viewBox="0 0 16 16" fill="none">
 					{#if isExpanded}
-						<!-- Left arrow "<" -->
 						<path
 							d="M10 4L6 8L10 12"
 							stroke="white"
@@ -191,7 +188,6 @@
 							stroke-linejoin="round"
 						/>
 					{:else}
-						<!-- Right arrow ">" -->
 						<path
 							d="M6 4L10 8L6 12"
 							stroke="white"
@@ -203,17 +199,12 @@
 				</svg>
 			</button>
 		</div>
-
-		<!-- Overlay when expanded (optional - for mobile/tablet) -->
-		{#if isExpanded}
-			<div class="sidebar-overlay" on:click={toggleSidebar}></div>
-		{/if}
 	{/if}
 
 	<!-- Child pages render here -->
 	<main
 		class="main-content"
-		class:sidebar-visible={!shouldHideSidebar($page.url.pathname)}
+		class:shifted={isExpanded && !shouldHideSidebar($page.url.pathname)}
 		class:no-sidebar={shouldHideSidebar($page.url.pathname)}
 	>
 		{@render children?.()}
@@ -232,6 +223,7 @@
 		position: relative;
 	}
 
+	/* ========== SIDEBAR ========== */
 	.sidebar {
 		width: 70px;
 		background: #03440c;
@@ -241,7 +233,7 @@
 		left: 0;
 		top: 0;
 		height: 100vh;
-		z-index: 1000;
+		z-index: 100;
 		transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 	}
@@ -254,22 +246,22 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
 		padding: 20px 0;
 		overflow: hidden;
 	}
 
+	/* ========== HEADER ========== */
 	.sidebar-header {
 		display: flex;
 		align-items: center;
 		gap: 12px;
 		padding: 0 15px;
 		margin-bottom: 40px;
-		width: 100%;
 	}
 
 	.logo svg {
 		display: block;
+		flex-shrink: 0;
 	}
 
 	.brand-name {
@@ -279,12 +271,12 @@
 		white-space: nowrap;
 	}
 
+	/* ========== NAVIGATION ========== */
 	.sidebar-nav {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
-		width: 100%;
-		padding: 0 5px;
+		padding: 0 10px;
 	}
 
 	.nav-item {
@@ -298,7 +290,9 @@
 		padding: 10px 12px;
 		border-radius: 10px;
 		cursor: pointer;
-		transition: background 0.2s, transform 0.1s;
+		transition:
+			background 0.2s,
+			transform 0.1s;
 	}
 
 	.nav-item:hover {
@@ -315,12 +309,13 @@
 		height: 32px;
 		border-radius: 6px;
 		object-fit: contain;
-		display: block;
+		flex-shrink: 0;
 	}
 
 	.nav-icon-svg {
 		width: 24px;
 		height: 24px;
+		flex-shrink: 0;
 	}
 
 	.nav-label {
@@ -330,6 +325,17 @@
 		white-space: nowrap;
 	}
 
+	/* ========== TUTORIAL BUTTON (Bottom) ========== */
+	.tutorial-nav-wrapper {
+		margin-top: auto;
+		padding: 0 10px 12px 10px;
+	}
+
+	.tutorial-nav {
+		/* Inherits all nav-item styles */
+	}
+
+	/* ========== TOGGLE BUTTON ========== */
 	.toggle-btn {
 		position: absolute;
 		right: -12px;
@@ -357,16 +363,7 @@
 		background: #077019;
 	}
 
-	.sidebar-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.3);
-		z-index: 900;
-	}
-
+	/* ========== MAIN CONTENT ========== */
 	.main-content {
 		margin-left: 70px;
 		min-height: 100vh;
@@ -375,11 +372,7 @@
 		z-index: 1;
 	}
 
-	.main-content.sidebar-visible {
-		margin-left: 70px;
-	}
-
-	.sidebar.expanded ~ .main-content.sidebar-visible {
+	.main-content.shifted {
 		margin-left: 220px;
 	}
 
@@ -387,6 +380,7 @@
 		margin-left: 0;
 	}
 
+	/* ========== MOBILE ========== */
 	@media (max-width: 768px) {
 		.sidebar {
 			width: 60px;
@@ -396,12 +390,11 @@
 			width: 200px;
 		}
 
-		.main-content,
-		.main-content.sidebar-visible {
+		.main-content {
 			margin-left: 60px;
 		}
 
-		.sidebar.expanded ~ .main-content.sidebar-visible {
+		.main-content.shifted {
 			margin-left: 200px;
 		}
 
@@ -425,44 +418,6 @@
 		.nav-icon-svg {
 			width: 20px;
 			height: 20px;
-			margin-left: 0;
 		}
-
-  .tutorial-nav-wrapper {
-    margin-top: auto;
-    padding: 0 10px 12px 10px;
-  }
-
-  .tutorial-nav {
-    border: none;
-    background: transparent;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  /* Line-art "?" in a circle, using currentColor (white) */
-  .tutorial-icon-circle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    border: 2px solid currentColor;
-    font-size: 0.85rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-
-  /* Optional: subtle distinction on hover, same as other nav items */
-  .tutorial-nav:hover {
-    opacity: 0.9;
-    transform: translateX(2px);
-    transition:
-      opacity 0.15s ease-out,
-      transform 0.15s ease-out;
-  }
-}
-
+	}
 </style>

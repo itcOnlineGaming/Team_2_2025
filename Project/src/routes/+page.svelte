@@ -119,7 +119,11 @@
     const savedNextTaskId = localStorage.getItem('nextTaskId');
     const savedNextSubTaskId = localStorage.getItem('nextSubTaskId');
     
-    if (savedAgreement === 'true') {
+    // Always show welcome popup on first visit
+    if (savedAgreement !== 'true') {
+      showWelcomePopup = true;
+      agreedToTest = false;
+    } else {
       showWelcomePopup = false;
       agreedToTest = true;
       
@@ -1056,7 +1060,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 3000;
+    z-index: 5000;
     backdrop-filter: blur(4px);
   }
 
