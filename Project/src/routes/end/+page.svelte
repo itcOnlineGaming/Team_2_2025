@@ -62,8 +62,12 @@
      this page doesn't, so we don't need to adjust it here. */
 
 :global(body) {
-    overflow: hidden;
-  }
+  overflow-y: auto;
+}
+
+.container {
+  overflow-y: auto;
+}
 
   main {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
