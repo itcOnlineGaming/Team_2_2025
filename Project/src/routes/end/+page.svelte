@@ -61,27 +61,48 @@
   /* If any content on other pages relies on margin-left from the sidebar,
      this page doesn't, so we don't need to adjust it here. */
 
+:global(body) {
+    overflow: hidden;
+  }
+
   main {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    height: 100vh;
+    background: linear-gradient(135deg, #1e5128 0%, #2d6a4f 50%, #52b788 100%);
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-    padding: 20px;
+    overflow: hidden;
   }
 
   .container {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(10px);
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     border-radius: 24px;
-    padding: 48px 32px;
+    padding: 32px 32px 24px;
     width: 100%;
-    max-width: 700px;
+    max-width: 900px;
+    height: 95vh;
+    max-height: 95vh;
     color: #1f2937;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.6s ease-out;
   }
 
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
   .header {
     text-align: center;
     margin-bottom: 40px;

@@ -236,6 +236,7 @@
 		z-index: 100;
 		transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+		align-items: flex-start;
 	}
 
 	.sidebar.expanded {
@@ -246,6 +247,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
+		justify-content: space-between;
 		padding: 20px 0;
 		overflow: hidden;
 	}
@@ -304,19 +306,12 @@
 		transform: translateX(1px) scale(0.99);
 	}
 
-	.nav-icon-img {
-		width: 32px;
-		height: 32px;
-		border-radius: 6px;
-		object-fit: contain;
-		flex-shrink: 0;
-	}
-
-	.nav-icon-svg {
-		width: 24px;
-		height: 24px;
-		flex-shrink: 0;
-	}
+.nav-icon-img,
+.nav-icon-svg {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
 
 	.nav-label {
 		font-size: 0.96rem;
