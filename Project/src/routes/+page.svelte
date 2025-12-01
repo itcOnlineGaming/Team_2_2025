@@ -108,7 +108,8 @@
     },
     {
       title: "Complete Tasks for Trees!",
-      message: "When you mark a task as 'Completed', you'll earn a tree for your forest! 🌳",
+      message: "At the top right of a task it displays a toggle to mark the task as completed." +
+               " Once marked completed, you can remove the task and earn a tree for your forest!",
       position: "center"
     }
   ];
