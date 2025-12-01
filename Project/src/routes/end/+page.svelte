@@ -68,12 +68,11 @@
 .container {
   overflow-y: auto;
 }
-
   main {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     height: 100vh;
     background: linear-gradient(135deg, #1e5128 0%, #2d6a4f 50%, #52b788 100%);
-    padding: 20px;
+    padding: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
