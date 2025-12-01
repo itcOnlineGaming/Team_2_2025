@@ -329,7 +329,8 @@
     </div>
   </div>
 
-
+  <!-- ADDED: Unified checklist component -->
+  <UnifiedChecklist />
 
   <TutorialPopup
     bind:this={tutorialComponent}
