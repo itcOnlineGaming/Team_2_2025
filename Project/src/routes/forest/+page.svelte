@@ -23,7 +23,7 @@
 </div>
 
 <style>
-    :global(body) { margin:0; }
+    :global(body) { margcd prot in:0; }
 
     .content {
         padding:20px 40px;

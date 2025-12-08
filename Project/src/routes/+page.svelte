@@ -8,11 +8,9 @@
   let popupMessage = '';
   let popupTimeout: NodeJS.Timeout;
   let treeCount = 0;
-  
   availableTreesStore.subscribe(value => {
     treeCount = value;
   });
-  
   function triggerPopup(message: string) {
     popupMessage = message;
     showPopup = true;
@@ -35,7 +33,8 @@
         tasks = [{
             id: 1,
             title: 'Review Project Brief',
-            startDate: new Date().toISOString().split('T')[0],
+            startDate: new 
+Date().toISOString().split('T')[0],
             dueDate: new Date(Date.now() + 604800000).toISOString().split('T')[0],
             color: '#38bdf8',
             showTestTasks: false,
@@ -44,19 +43,21 @@
             subtasks: []
         }];
       }
-      isLoading = false;
+   
+    isLoading = false;
     }, 800);
   });
-
+  
   function handleBoardChange(event: CustomEvent<Task[]>) {
     tasks = event.detail;
     localStorage.setItem(`tasks_${user.id}`, JSON.stringify(tasks));
   }
 
-  function handleTreeEarned(event: CustomEvent<{ title: string }>) {
-    console.log('Tree earned event received!', event.detail);
-    availableTreesStore.increment(); 
-    triggerPopup(`You've gained a tree! 🌳`);
+  // UPDATED: Now accepts the title directly, not an event object
+  function handleTreeEarned(taskTitle: string) {
+    console.log('Tree earned event received!', taskTitle);
+    availableTreesStore.increment();
+    triggerPopup(`🎉 Task "${taskTitle}" finished! You earned a tree! 🌳`);
   }
 </script>
 
@@ -73,8 +74,10 @@
         <TaskBoard 
             {tasks} 
             on:change={handleBoardChange} 
-            on:treeEarned={handleTreeEarned}
-        />
+            
+            onTreeEarnedCallback={handleTreeEarned}
+       
+  />
     {/if}
   </main>
   
